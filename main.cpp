@@ -23,36 +23,35 @@ GLfloat lastFrame = 0.0f;
 
 void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	switch (key)
-	{
-	case GLFW_KEY_ESCAPE:
-		if (action == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, GL_TRUE);
-		break;
-  case GLFW_KEY_1:
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    break;
-  case GLFW_KEY_2:
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    break;
-	default:
-		if (action == GLFW_PRESS)
-      Input.keys[key] = true;
-		else if (action == GLFW_RELEASE)
-      Input.keys[key] = false;
+	switch (key) {
+        case GLFW_KEY_ESCAPE:
+	    	if (action == GLFW_PRESS)
+		    	glfwSetWindowShouldClose(window, GL_TRUE);
+		    break;
+        case GLFW_KEY_1:
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            break;
+        case GLFW_KEY_2:
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            break;
+	    default:
+		    if (action == GLFW_PRESS)
+                Input.keys[key] = true;
+		    else if (action == GLFW_RELEASE)
+                Input.keys[key] = false;
 	}
 }
 
-void processPlayerMovement(Player &player)
+void processPlayerMovement(Player &player, Maze &maze)
 {
   if (Input.keys[GLFW_KEY_W])
-    player.ProcessInput(MovementDir::UP);
+    player.ProcessInput(MovementDir::UP, maze);
   else if (Input.keys[GLFW_KEY_S])
-    player.ProcessInput(MovementDir::DOWN);
+    player.ProcessInput(MovementDir::DOWN, maze);
   if (Input.keys[GLFW_KEY_A])
-    player.ProcessInput(MovementDir::LEFT);
+    player.ProcessInput(MovementDir::LEFT, maze);
   else if (Input.keys[GLFW_KEY_D])
-    player.ProcessInput(MovementDir::RIGHT);
+    player.ProcessInput(MovementDir::RIGHT, maze);
 }
 
 void OnMouseButtonClicked(GLFWwindow* window, int button, int action, int mods)
@@ -147,14 +146,17 @@ int main(int argc, char** argv)
 	while (gl_error != GL_NO_ERROR)
 		gl_error = glGetError();
 
-	Point starting_pos{.x = WINDOW_WIDTH / 2, .y = WINDOW_HEIGHT / 2};
-	Player player{starting_pos};
+    // here must read labirint
 
+    std::string labirint("/home/getsu/Data/Game/Rogalik/resources/labirint.lab");
+    Maze maze(labirint);
+    Point starting_pos = maze.Get_Player(); //{.x = WINDOW_WIDTH / 2, .y = WINDOW_HEIGHT / 2};
+	Player player{starting_pos};
 	Image img("../resources/tex.png");
 	Image screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
 
-  glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
 
   //game loop
 	while (!glfwWindowShouldClose(window))
@@ -162,13 +164,14 @@ int main(int argc, char** argv)
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-    glfwPollEvents();
+        glfwPollEvents();
 
-    processPlayerMovement(player);
-    player.Draw(screenBuffer);
+        processPlayerMovement(player, maze);
+        maze.Draw(screenBuffer);
+        player.Draw(screenBuffer);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
-    glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+        glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
 
 		glfwSwapBuffers(window);
 	}
