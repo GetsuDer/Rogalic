@@ -4,7 +4,7 @@
 #include <string>
 
 constexpr int tileSize = 32;
-
+constexpr int keySize = 16;
 struct Pixel
 {
   uint8_t r;

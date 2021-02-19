@@ -13,7 +13,22 @@ enum class Maze_Point {
     EMPTY,
     WALL,
     FLOOR,
-    PLAYER
+    PLAYER,
+    DOOR_OPENED,
+    DOOR_CLOSED
+};
+
+enum class Key_Type {
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN
+};
+
+struct Key {
+    Key(int x, int y);
+    bool obtained;
+    Point coords;
 };
 
 struct Maze {
@@ -22,6 +37,7 @@ struct Maze {
         Point Get_Player();
         bool free(Point coords);
     private:
+        std::vector <Key> keys;
         Point Start_Pos;
         int size;
         std::vector <std::vector <Maze_Point>> field;
@@ -38,13 +54,14 @@ enum class MovementDir
 struct Player
 {
   explicit Player(Point pos = {.x = 10, .y = 10}) :
-                 coords(pos), old_coords(coords) {};
+                 coords(pos), old_coords(coords), keys_obtained(0) {};
 
   bool Moved() const;
   void ProcessInput(MovementDir dir, Maze &maze);
   void Draw(Image &screen);
 
 private:
+  int keys_obtained;
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};

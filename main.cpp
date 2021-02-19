@@ -148,9 +148,9 @@ int main(int argc, char** argv)
 
     // here must read labirint
 
-    std::string labirint("/home/getsu/Data/Game/Rogalik/resources/labirint.lab");
+    std::string labirint("resources/rooms/roomA");
     Maze maze(labirint);
-    Point starting_pos = maze.Get_Player(); //{.x = WINDOW_WIDTH / 2, .y = WINDOW_HEIGHT / 2};
+    Point starting_pos = maze.Get_Player();
 	Player player{starting_pos};
 	Image img("../resources/tex.png");
 	Image screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
