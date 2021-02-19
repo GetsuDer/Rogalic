@@ -38,6 +38,8 @@ struct Maze {
         Point Get_Player();
         Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
+        int opened_door(Point coords);
+        Point from_door(int door);
         std::vector <Key> keys;
         Point Start_Pos;
         int size;

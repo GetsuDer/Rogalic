@@ -176,6 +176,7 @@ int main(int argc, char** argv)
             int door_type;
             std::string other_room;
             labirint_in >> door_type >> other_room;
+            other_room = "resources/rooms/" + other_room;
             for (int k = 0; k < rooms_number; k++) {
                 if (rooms[k].name == other_room) {
                     rooms[i].others[door_type - 1] = &(rooms[k]);

@@ -53,6 +53,13 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
     coords.x = old_coords.x;
     coords.y = old_coords.y;
   }
+  int change = (*maze)->opened_door(coords);
+  if (change != -1) {
+      *maze = (*maze)->others[change];
+      coords = (*maze)->from_door((change + 2) % 4);
+      coords.x *= tileSize;
+      coords.y *= tileSize;
+  }
 }
 
 void Player::Draw(Image &screen)

@@ -80,11 +80,71 @@ Maze::Maze(std::string &path) {
 };
 bool
 Maze::free(Point coords) {
-    return field[coords.x / tileSize][coords.y / tileSize] == Maze_Point::FLOOR;
+    int x = coords.x / tileSize;
+    int y = coords.y / tileSize;
+    return field[x][y] == Maze_Point::FLOOR || field[x][y] == Maze_Point::DOOR_OPENED;
 }
 
 Point Maze::Get_Player() {
     return Start_Pos;
+}
+
+Point
+Maze::from_door(int door) {
+    Point res;
+    switch (door) {
+        case 0:
+            res.x = 1;
+            for (int i = 0; i < size; i++) {
+                if (field[0][i] == Maze_Point::DOOR_OPENED) {
+                    res.y = i;
+                }
+            }
+            return res;
+        case 1:
+            res.y = size - 2;
+            for (int i = 0; i < size; i++) {
+                if (field[i][size - 1] == Maze_Point::DOOR_OPENED) {
+                    res.x = i;
+                }
+            }
+            return res;
+        case 2:
+            res.x = size - 2;
+            for (int i = 0; i < size; i++) {
+                if (field[size - 1][i] == Maze_Point::DOOR_OPENED) {
+                    res.y = i;
+                }
+            }
+            return res;
+        default:
+            res.y = 1;
+            for (int i = 0; i < size; i++) {
+                if (field[i][0] == Maze_Point::DOOR_OPENED) {
+                    res.x = i;
+                }
+            }
+            return res;
+    }
+}
+int 
+Maze::opened_door(Point coords) {
+    int x = coords.x / tileSize;
+    int y = coords.y / tileSize;
+    if (field[x][y] == Maze_Point::DOOR_OPENED) {
+        if (x == 0) {
+            return 0;
+        }
+        if (y == 0) {
+            return 3;
+        }
+        if (y > x) {
+            return 1;
+        }
+        return 2;
+    } else {
+        return -1;
+    }
 }
 
 static void Draw_Square(int x, int y, Image &object, Image &screen) {
