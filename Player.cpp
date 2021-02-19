@@ -1,5 +1,6 @@
 #include "Player.h"
 #include <iostream>
+Image player_img("resources/player/1.png");
 
 bool Player::Moved() const
 {
@@ -9,7 +10,7 @@ bool Player::Moved() const
     return true;
 }
 
-void Player::ProcessInput(MovementDir dir, Maze &maze)
+void Player::ProcessInput(MovementDir dir, Maze **maze)
 {
   int move_dist = move_speed * 1;
   Point new_coords = {.x = coords.x, .y = coords.y};
@@ -48,7 +49,7 @@ void Player::ProcessInput(MovementDir dir, Maze &maze)
   old_coords.y = coords.y;
   coords.x = new_coords.x;
   coords.y = new_coords.y;
-  if (!maze.free(check_cage_1) || !maze.free(check_cage_2)) {
+  if (!(*maze)->free(check_cage_1) || !(*maze)->free(check_cage_2)) {
     coords.x = old_coords.x;
     coords.y = old_coords.y;
   }
@@ -56,12 +57,12 @@ void Player::ProcessInput(MovementDir dir, Maze &maze)
 
 void Player::Draw(Image &screen)
 {
-  for(int y = coords.y; y <= coords.y + tileSize; ++y)
-  {
-    for(int x = coords.x; x <= coords.x + tileSize; ++x)
-    {
-        // draw player
-      screen.PutPixel(x, y, color);
+    for (int i = 0; i < tileSize; i++) {
+        for (int j = 0; j < tileSize; j++) {
+            int x = coords.x + i;
+            int y = coords.y + j;
+            screen.PutPixel(x, y, 
+                    blend(screen.GetPixel(x, y), player_img.GetPixel(i, tileSize - j - 1)));
     }
   }
 }

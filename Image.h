@@ -13,6 +13,14 @@ struct Pixel
   uint8_t a;
 };
 
+static Pixel blend(Pixel oldC, Pixel newC) {
+    newC.r = newC.a / 255.0 * (newC.r - oldC.r) + oldC.r;
+    newC.g = newC.a / 255.0 * (newC.g - oldC.g) + oldC.g;
+    newC.b = newC.a / 255.0 * (newC.b - oldC.b) + oldC.b;
+    newC.a = 255;
+    return newC;
+} 
+
 constexpr Pixel backgroundColor{0, 0, 0, 0};
 
 struct Image

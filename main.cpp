@@ -1,6 +1,8 @@
 #include "common.h"
 #include "Image.h"
 #include "Player.h"
+#include <iostream>
+#include <fstream>
 
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
@@ -42,7 +44,7 @@ void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, in
 	}
 }
 
-void processPlayerMovement(Player &player, Maze &maze)
+void processPlayerMovement(Player &player, Maze **maze)
 {
   if (Input.keys[GLFW_KEY_W])
     player.ProcessInput(MovementDir::UP, maze);
@@ -147,14 +149,44 @@ int main(int argc, char** argv)
 		gl_error = glGetError();
 
     // here must read labirint
+    std::ifstream labirint_in;
+    labirint_in.open("resources/rooms/labirint");
+    int rooms_number;
+    std::string room_name;
 
-    std::string labirint("resources/rooms/roomA");
-    Maze maze(labirint);
-    Point starting_pos = maze.Get_Player();
+    labirint_in >> rooms_number;
+
+    std::vector <Maze> rooms;
+    for (int i = 0; i < rooms_number; i++) {
+        labirint_in >> room_name;
+        room_name = "resources/rooms/" + room_name;
+        rooms.push_back(Maze(room_name));
+    }
+    std::string start_room;
+    labirint_in >> start_room;
+    start_room = "resources/rooms/" + start_room; 
+    Maze *current_room = NULL;
+    for (int i = 0; i < rooms_number; i++) {
+        if (rooms[i].name == start_room) {
+            current_room = &(rooms[i]);
+        }
+        int doors_number;
+        labirint_in >> doors_number;
+        for (int j = 0; j < doors_number; j++) {
+            int door_type;
+            std::string other_room;
+            labirint_in >> door_type >> other_room;
+            for (int k = 0; k < rooms_number; k++) {
+                if (rooms[k].name == other_room) {
+                    rooms[i].others[door_type - 1] = &(rooms[k]);
+                }
+            }
+        }
+    }    
+    labirint_in.close();
+    Point starting_pos = current_room->Get_Player();
 	Player player{starting_pos};
-	Image img("../resources/tex.png");
 	Image screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
-
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
 
@@ -166,8 +198,8 @@ int main(int argc, char** argv)
 		lastFrame = currentFrame;
         glfwPollEvents();
 
-        processPlayerMovement(player, maze);
-        maze.Draw(screenBuffer);
+        processPlayerMovement(player, &current_room);
+        current_room->Draw(screenBuffer);
         player.Draw(screenBuffer);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;

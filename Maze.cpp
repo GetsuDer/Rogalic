@@ -18,6 +18,7 @@ Key::Key(int x, int y) {
 }
 
 Maze::Maze(std::string &path) {
+    name = path;
     std::ifstream input;
     input.open(path);
     int height = 0;
@@ -94,13 +95,6 @@ static void Draw_Square(int x, int y, Image &object, Image &screen) {
     }
 }
 
-Pixel blend(Pixel oldC, Pixel newC) {
-    newC.r = newC.a / 255.0 * (newC.r - oldC.r) + oldC.r;
-    newC.g = newC.a / 255.0 * (newC.g - oldC.g) + oldC.g;
-    newC.b = newC.a / 255.0 * (newC.b - oldC.b) + oldC.b;
-    newC.a = 255;
-    return newC;
-} 
 void 
 Maze::Draw(Image &screen) {
     for (int x = 0; x < size; x++) {
@@ -141,3 +135,21 @@ Maze::Draw(Image &screen) {
     
     }
 };
+
+Pixel
+Maze::Get_Pixel(int x, int y) {
+    switch (field[x / tileSize][y / tileSize]) {
+        case Maze_Point::FLOOR:
+            return floor_img.GetPixel(x % tileSize, y % tileSize);
+        case Maze_Point::EMPTY:
+            return empty_img.GetPixel(x % tileSize, y % tileSize);
+        case Maze_Point::WALL:
+            return wall_img.GetPixel(x % tileSize, y % tileSize);
+        case Maze_Point::DOOR_OPENED:
+            return doors_opened_img.GetPixel(x % tileSize, y % tileSize);
+        case Maze_Point::DOOR_CLOSED:
+            return doors_closed_img.GetPixel(x % tileSize, y % tileSize);
+        default:
+            return floor_img.GetPixel(x % tileSize, y % tileSize);
+       }
+}

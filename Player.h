@@ -32,14 +32,16 @@ struct Key {
 };
 
 struct Maze {
+        std::string name;
         Maze(std::string &path);
         void Draw(Image &screen);
         Point Get_Player();
+        Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
-    private:
         std::vector <Key> keys;
         Point Start_Pos;
         int size;
+        Maze *others[4];
         std::vector <std::vector <Maze_Point>> field;
 };
 
@@ -57,7 +59,7 @@ struct Player
                  coords(pos), old_coords(coords), keys_obtained(0) {};
 
   bool Moved() const;
-  void ProcessInput(MovementDir dir, Maze &maze);
+  void ProcessInput(MovementDir dir, Maze **maze);
   void Draw(Image &screen);
 
 private:
