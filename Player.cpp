@@ -42,6 +42,13 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       check_cage_2.x += tileSize + move_dist - 1;
       check_cage_2.y += tileSize - 1;      
       break;
+    case MovementDir::ACTION:
+      if (keys_obtained > 0) {
+        if ((*maze)->open_nearest_door(coords)) {
+            keys_obtained--;
+        }
+      }
+      break;
     default:
       break;
   }
@@ -59,8 +66,11 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       coords = (*maze)->from_door((change + 2) % 4);
       coords.x *= tileSize;
       coords.y *= tileSize;
+      return;
   }
+  keys_obtained += (*maze)->update_keys(coords);
 }
+
 
 void Player::Draw(Image &screen)
 {

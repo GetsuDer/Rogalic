@@ -89,6 +89,22 @@ Point Maze::Get_Player() {
     return Start_Pos;
 }
 
+int
+Maze::update_keys(Point coords) {
+    int res = 0;
+    for (int key = 0; key < keys.size(); key++) {
+        if (keys[key].obtained) continue;
+        Point key_point;
+        key_point.x = keys[key].coords.x * tileSize;
+        key_point.y = keys[key].coords.y * tileSize;
+        if (dist(coords, key_point) < tileSize / 3) {
+            keys[key].obtained = true;
+            res++;
+        }
+    }    
+    return res;
+}
+
 Point
 Maze::from_door(int door) {
     Point res;
@@ -127,6 +143,95 @@ Maze::from_door(int door) {
             return res;
     }
 }
+
+Point
+Maze::left_door() {
+    Point res;
+    res.x = -1;
+    res.y = -1;
+    for (int i = 0; i < size; i++) {
+        if (field[0][i] == Maze_Point::DOOR_OPENED || field[0][i] == Maze_Point::DOOR_CLOSED) {
+            res.x = 0;
+            res.y = i;
+            return res;
+        }
+    }
+    return res;
+}
+
+Point
+Maze::right_door() {
+    Point res;
+    res.x = -1;
+    res.y = -1;
+    for (int i = 0; i < size; i++) {
+        if (field[size - 1][i] == Maze_Point::DOOR_OPENED || field[size - 1][i] == Maze_Point::DOOR_CLOSED) {
+            res.x = size - 1;
+            res.y = i;
+            return res;
+        }
+    }
+    return res;
+}
+
+Point 
+Maze::up_door() {
+    Point res;
+    res.x = -1;
+    res.y = -1;
+    for (int i = 0; i < size; i++) {
+        if (field[i][size - 1] == Maze_Point::DOOR_OPENED || field[i][size - 1] == Maze_Point::DOOR_CLOSED) {
+            res.x = i;
+            res.y = size - 1;
+            return res;
+        }
+    }
+    return res;
+}
+
+Point
+Maze::down_door() {
+    Point res;
+    res.x = -1;
+    res.y = -1;
+    for (int i = 0; i < size; i++) {
+        if (field[i][0] == Maze_Point::DOOR_OPENED || field[i][0] == Maze_Point::DOOR_CLOSED) {
+            res.x = i;
+            res.y = 0;
+            return res;
+        }
+    }
+    return res;
+}
+
+bool
+Maze::open_nearest_door(Point coords) {
+    coords.x /= tileSize;
+    coords.y /= tileSize;
+
+    Point door = left_door();
+    if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
+        field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        return true;
+    }
+    door = up_door();
+    if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
+        field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        return true;
+    }
+    door = right_door();
+    if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
+        field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        return true;
+    }
+    door = down_door();
+    if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
+        field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        return true;
+    }
+    return false;
+}
+
 int 
 Maze::opened_door(Point coords) {
     int x = coords.x / tileSize;
@@ -181,6 +286,7 @@ Maze::Draw(Image &screen) {
         }
     }
     for (int key = 0; key < keys.size(); key++) {
+        if (keys[key].obtained) continue;
         int x = keys[key].coords.x;
         int y = keys[key].coords.y;
         int delta = (tileSize - keySize) / 2;

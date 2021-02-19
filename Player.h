@@ -1,6 +1,7 @@
 #ifndef MAIN_PLAYER_H
 #define MAIN_PLAYER_H
 
+#include <cmath>
 #include <vector>
 #include "Image.h"
 struct Point
@@ -8,6 +9,13 @@ struct Point
   int x;
   int y;
 };
+
+static double 
+dist(Point first, Point second) {
+    double x = first.x - second.x;
+    double y = first.y - second.y;
+    return sqrt(x * x + y * y);
+}
 
 enum class Maze_Point {
     EMPTY,
@@ -38,7 +46,13 @@ struct Maze {
         Point Get_Player();
         Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
+        bool open_nearest_door(Point coords);
+        int update_keys(Point coords);
         int opened_door(Point coords);
+        Point left_door();
+        Point right_door();
+        Point up_door();
+        Point down_door();
         Point from_door(int door);
         std::vector <Key> keys;
         Point Start_Pos;
@@ -53,6 +67,7 @@ enum class MovementDir
   DOWN,
   LEFT,
   RIGHT,
+  ACTION
 };
 
 struct Player

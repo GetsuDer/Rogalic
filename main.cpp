@@ -54,6 +54,8 @@ void processPlayerMovement(Player &player, Maze **maze)
     player.ProcessInput(MovementDir::LEFT, maze);
   else if (Input.keys[GLFW_KEY_D])
     player.ProcessInput(MovementDir::RIGHT, maze);
+  else if (Input.keys[GLFW_KEY_E])
+    player.ProcessInput(MovementDir::ACTION, maze);
 }
 
 void OnMouseButtonClicked(GLFWwindow* window, int button, int action, int mods)
