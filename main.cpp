@@ -46,7 +46,6 @@ void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, in
 
 void processPlayerMovement(Player &player, Maze **maze)
 {
-    if (player.state != PlayerState::ALIVE) return;
   if (Input.keys[GLFW_KEY_W])
     player.ProcessInput(MovementDir::UP, maze);
   else if (Input.keys[GLFW_KEY_S])
@@ -57,6 +56,7 @@ void processPlayerMovement(Player &player, Maze **maze)
     player.ProcessInput(MovementDir::RIGHT, maze);
   else if (Input.keys[GLFW_KEY_E])
     player.ProcessInput(MovementDir::ACTION, maze);
+  else player.ProcessInput(MovementDir::NONE, maze);
 }
 
 void OnMouseButtonClicked(GLFWwindow* window, int button, int action, int mods)
@@ -274,16 +274,18 @@ int main(int argc, char** argv)
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
         glfwPollEvents();
-
-        processPlayerMovement(player, &current_room);
-        current_room->Draw(screenBuffer);
-        player.Draw(screenBuffer);
-        draw_info(screenBuffer, player, current_room);
-        if (player.state == PlayerState::DEAD) {
-            game_over(screenBuffer);
-        } else {
-            if (player.state == PlayerState::WIN) {
-                draw_win(screenBuffer);        
+        if (player.state == PlayerState::ALIVE) {
+            processPlayerMovement(player, &current_room);
+            current_room->Draw_Lower(screenBuffer);
+            player.Draw(screenBuffer);
+            current_room->Draw_Higher(screenBuffer);
+            draw_info(screenBuffer, player, current_room);
+            if (player.state == PlayerState::DEAD) {
+                game_over(screenBuffer);
+            } else {
+                if (player.state == PlayerState::WIN) {
+                    draw_win(screenBuffer);        
+                }
             }
         }
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;

@@ -1,6 +1,7 @@
 #ifndef MAIN_PLAYER_H
 #define MAIN_PLAYER_H
 
+#include <iostream>
 #include <cmath>
 #include <vector>
 #include "Image.h"
@@ -39,11 +40,11 @@ struct Key {
     bool obtained;
     Point coords;
 };
-
 struct Maze {
         std::string name;
         Maze(std::string &path);
-        void Draw(Image &screen);
+        void Draw_Lower(Image &screen);
+        void Draw_Higher(Image &screen);
         Point Get_Player();
         Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
@@ -63,6 +64,10 @@ struct Maze {
         int size;
         Maze *others[4];
         std::vector <std::vector <Maze_Point>> field;
+        std::vector <Image *> key_img;
+        int key_img_ind;
+        int key_img_times;
+        bool up;
 };
 
 enum class MovementDir
@@ -71,7 +76,8 @@ enum class MovementDir
   DOWN,
   LEFT,
   RIGHT,
-  ACTION
+  ACTION,
+  NONE
 };
 
 enum class PlayerState
@@ -86,6 +92,15 @@ struct Player
   explicit Player(Point pos = {.x = 10, .y = 10}) :
                  coords(pos), old_coords(coords), keys_obtained(0) {
                     state = PlayerState::ALIVE;
+                    look = MovementDir::RIGHT;
+                    for (int i = 0; i < 3; i++) {
+                        std::string name = "resources/player/" + std::to_string(i) + ".png";
+                        Image *img = new Image(name);
+                        walk.push_back(img);
+                    }
+                    active = false;
+                    walk_ind = 0;
+                    walk_times = 0;
                  };
 
   bool Moved() const;
@@ -94,6 +109,11 @@ struct Player
   PlayerState state;
   int keys_obtained;
 private:
+  MovementDir look;
+  bool active;
+  std::vector <Image *> walk;
+  int walk_ind;
+  int walk_times;
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};

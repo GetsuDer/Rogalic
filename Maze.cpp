@@ -9,7 +9,6 @@ Image floor_img("resources/elems/floor.png");
 Image empty_img("resources/elems/empty.png");
 Image doors_opened_img("resources/elems/doors_opened.jpg");
 Image doors_closed_img("resources/elems/doors_closed.jpg");
-Image key_img("resources/elems/key.png");
 Image exit_img("resources/elems/exit.png");
 Key::Key(int x, int y) {
     coords.x = x;
@@ -84,7 +83,17 @@ Maze::Maze(std::string &path) {
         }
     }
     input.close();
+    int key_animation_number = 9;
+    for (int i = 0; i < key_animation_number; i++) {
+        std::string name = "resources/elems/key/" + std::to_string(i + 1) + ".png";
+        Image *img = new Image(name);
+        key_img.push_back(img);
+    }
+    key_img_ind = 0;
+    key_img_times = 0;
+    up = true;
 };
+
 bool
 Maze::free(Point coords) {
     int x = coords.x / tileSize;
@@ -270,7 +279,7 @@ static void Draw_Square(int x, int y, Image &object, Image &screen) {
 }
 
 void 
-Maze::Draw(Image &screen) {
+Maze::Draw_Lower(Image &screen) {
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
             switch(field[x][y]) {
@@ -297,21 +306,6 @@ Maze::Draw(Image &screen) {
             }
         }
     }
-    for (int key = 0; key < keys.size(); key++) {
-        if (keys[key].obtained) continue;
-        int x = keys[key].coords.x;
-        int y = keys[key].coords.y;
-        int delta = (tileSize - keySize) / 2;
-        for (int i = 0; i < keySize; i++) {
-            for (int j = 0; j < keySize; j++) {
-                screen.PutPixel(x * tileSize + delta + i,
-                                y * tileSize + delta + j,
-                                blend(floor_img.GetPixel(delta + i, tileSize - delta - j - 1), 
-                                      key_img.GetPixel(i, keySize - j - 1)));
-            }
-        }
-    
-    }
     if (exit.x != -1) {
         for (int x = 0; x < tileSize; x++) {
             for (int y = 0; y < tileSize; y++) {
@@ -320,8 +314,44 @@ Maze::Draw(Image &screen) {
             }
         }
     }
-};
+    for (int key = 0; key < keys.size(); key++) {
+        if (keys[key].obtained) continue;
+        int x = keys[key].coords.x;
+        int y = keys[key].coords.y;
+        int delta = (tileSize - keySize) / 2;
+        int img = key_img_ind;
+        key_img_times++;
+        if (key_img_times > 30) {
+            if (up) {
+                key_img_ind++;
+                if (key_img_ind == key_img.size() - 1) {
+                    up = false;
+                }
+            } else {
+                key_img_ind--;
+                if (!key_img_ind) {
+                    up = true;
+                }
+            }
+            key_img_times = 0;
+        }
+        for (int i = 0; i < keySize; i++) {
+            for (int j = 0; j < keySize; j++) {
+                screen.PutPixel(x * tileSize + delta + i,
+                                y * tileSize + delta + j,
+                                blend(floor_img.GetPixel(delta + i, tileSize - delta - j - 1), 
+                                      key_img[img]->GetPixel(i, keySize - j - 1)));
+            }
+        }
+    
+    }
 
+}
+void
+Maze::Draw_Higher(Image &screen) {
+// may be later
+
+}
 Pixel
 Maze::Get_Pixel(int x, int y) {
     switch (field[x / tileSize][y / tileSize]) {

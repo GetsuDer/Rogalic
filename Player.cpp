@@ -1,6 +1,6 @@
 #include "Player.h"
 #include <iostream>
-Image player_img("resources/player/right_0.png");
+Image player_img("resources/player/0.png");
 
 bool Player::Moved() const
 {
@@ -16,6 +16,7 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
   Point new_coords = {.x = coords.x, .y = coords.y};
   Point check_cage_1 = {.x = coords.x, .y = coords.y};
   Point check_cage_2 = {.x = coords.x, .y = coords.y};
+  active = true;
   switch(dir)
   {
     case MovementDir::UP:
@@ -31,12 +32,14 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       check_cage_2.x += tileSize - 1;
       break;
     case MovementDir::LEFT:
+      look = MovementDir::LEFT;
       new_coords.x -= move_dist;
       check_cage_1.x -= move_dist;
       check_cage_2.x -= move_dist;
       check_cage_2.y += tileSize - 1;
       break;
     case MovementDir::RIGHT:
+      look = MovementDir::RIGHT;
       new_coords.x += move_dist;
       check_cage_1.x += tileSize + move_dist - 1;
       check_cage_2.x += tileSize + move_dist - 1;
@@ -48,6 +51,9 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
             keys_obtained--;
         }
       }
+      break;
+    case MovementDir::NONE:
+      active = false;
       break;
     default:
       break;
@@ -86,8 +92,18 @@ void Player::Draw(Image &screen)
         for (int j = 0; j < tileSize; j++) {
             int x = coords.x + i;
             int y = coords.y + j;
+            int img = (active) ? walk_ind : 0;
+            if (active) {
+                walk_times++;
+            } else {
+                walk_times = 0;
+            }
+            if (walk_times >= 10) {
+                walk_ind = (walk_ind + 1) % walk.size();
+                walk_times = 0;
+            }
             screen.PutPixel(x, y, 
-                    blend(screen.GetPixel(x, y), player_img.GetPixel(i, tileSize - j - 1)));
+                    blend(screen.GetPixel(x, y), walk[img]->GetPixel((look == MovementDir::RIGHT ? i : tileSize - i - 1), tileSize - j - 1)));
     }
   }
 }
