@@ -14,14 +14,12 @@ Key::Key(int x, int y) {
 
 Maze::Maze(std::string &_path, std::string &_type) {
     path = _path;
+    type = _type;
     std::string pref = "resources/elems/rooms/" + _type;
     
     std::string elem_path = pref + "/wall.png";
     wall = new Image(elem_path);
 
-    elem_path = pref + "/exit.png";
-    exit = new Image(elem_path);
-    
     elem_path = pref + "/empty.png";
     empty = new Image(elem_path);
 
@@ -102,6 +100,19 @@ Maze::Maze(std::string &_path, std::string &_type) {
     key_img_ind = 0;
     key_img_times = 0;
     up = true;
+
+    int exit_animation_number = 13;
+    for (int i = 0; i < exit_animation_number; i++) {
+        std::string name = "resources/elems/rooms/" + type + "/exit/" + std::to_string(i + 1) + ".png";
+        Image *img = new Image(name);
+        if (img->Width() == -1) {
+            std::cout << "problem with " << name << ' ' << type << '\n';
+        }
+        exit_img.push_back(img);
+    }
+    exit_img_ind = 0;
+    exit_img_times = 0;
+    exit_up = true;
 };
 
 bool
@@ -317,10 +328,26 @@ Maze::Draw_Lower(Image &screen) {
         }
     }
     if (exit_point.x != -1) {
+        int img = exit_img_ind;
+        exit_img_times++;
+        if (exit_img_times > 10) {
+            if (exit_up) {
+                exit_img_ind++;
+                if (exit_img_ind == exit_img.size() - 1) {
+                    exit_up = false;
+                }
+            } else {
+                exit_img_ind--;
+                if (!exit_img_ind) {
+                    exit_up = true;
+                }
+            }
+            exit_img_times = 0;
+        }
         for (int x = 0; x < tileSize; x++) {
             for (int y = 0; y < tileSize; y++) {
                 screen.PutPixel(exit_point.x * tileSize + x, exit_point.y * tileSize + y,
-                        blend(floor->GetPixel(x, tileSize - y - 1), exit->GetPixel(x, tileSize - y - 1)));
+                        blend(floor->GetPixel(x, tileSize - y - 1), exit_img[img]->GetPixel(x, tileSize - y - 1)));
             }
         }
     }
@@ -375,7 +402,7 @@ Maze::Get_Pixel(int x, int y) {
         case Maze_Point::DOOR_CLOSED:
             return doors_closed_img.GetPixel(x % tileSize, y % tileSize);
         case Maze_Point::EXIT:
-            return exit->GetPixel(x % tileSize, y % tileSize);
+            return exit_img[exit_img_ind]->GetPixel(x % tileSize, y % tileSize);
         default:
             return floor->GetPixel(x % tileSize, y % tileSize);
        }

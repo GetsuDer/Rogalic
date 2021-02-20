@@ -43,7 +43,7 @@ struct Key {
 struct Maze {
         std::string type;
         std::string path;
-        Image *wall, *floor, *empty, *exit;
+        Image *wall, *floor, *empty;
         Maze(std::string &_path, std::string &_type);
         void Draw_Lower(Image &screen);
         void Draw_Higher(Image &screen);
@@ -70,6 +70,11 @@ struct Maze {
         int key_img_ind;
         int key_img_times;
         bool up;
+
+        std::vector <Image *> exit_img;
+        int exit_img_ind;
+        int exit_img_times;
+        bool exit_up;
 };
 
 enum class MovementDir

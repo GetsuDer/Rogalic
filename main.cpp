@@ -169,11 +169,25 @@ draw_info(Image &screen, Player &player, Maze *maze) {
     }
     int n = player.keys_obtained;
     int n_len = number_len(n);
+    static int n_max_len = 1;
+    if (n_max_len < n_len) {
+        n_max_len = n_len;
+    }
+
+    int digit_size = 64;
+    for (int i = 0; i < n_max_len; i++) {
+        for (int x = 0; x < digit_size; x++) {
+           for (int y = 0; y < digit_size; y++) {
+                screen.PutPixel(width + i * digit_size + x, y_keys + y, backgroundColor);
+           }
+        } 
+    }
     while (n_len) {
         draw_digit(screen, n_len - 1, n % 10, width, y_keys);
         n /= 10;
         n_len--;
     } 
+    
 }
 
 void
