@@ -23,7 +23,8 @@ enum class Maze_Point {
     FLOOR,
     PLAYER,
     DOOR_OPENED,
-    DOOR_CLOSED
+    DOOR_CLOSED,
+    EXIT
 };
 
 enum class Key_Type {
@@ -48,6 +49,7 @@ struct Maze {
         bool free(Point coords);
         bool open_nearest_door(Point coords);
         bool fell(Point coords);
+        bool reach_exit(Point coords);
         int update_keys(Point coords);
         int opened_door(Point coords);
         Point left_door();
@@ -57,6 +59,7 @@ struct Maze {
         Point from_door(int door);
         std::vector <Key> keys;
         Point Start_Pos;
+        Point exit;
         int size;
         Maze *others[4];
         std::vector <std::vector <Maze_Point>> field;
@@ -71,15 +74,24 @@ enum class MovementDir
   ACTION
 };
 
+enum class PlayerState
+{
+    DEAD,
+    ALIVE,
+    WIN
+};
+
 struct Player
 {
   explicit Player(Point pos = {.x = 10, .y = 10}) :
-                 coords(pos), old_coords(coords), keys_obtained(0), alive(true) {};
+                 coords(pos), old_coords(coords), keys_obtained(0) {
+                    state = PlayerState::ALIVE;
+                 };
 
   bool Moved() const;
   void ProcessInput(MovementDir dir, Maze **maze);
   void Draw(Image &screen);
-  bool alive;
+  PlayerState state;
   int keys_obtained;
 private:
   Point coords {.x = 10, .y = 10};

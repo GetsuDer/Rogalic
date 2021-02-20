@@ -46,7 +46,7 @@ void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, in
 
 void processPlayerMovement(Player &player, Maze **maze)
 {
-    if (!player.alive) return;
+    if (player.state != PlayerState::ALIVE) return;
   if (Input.keys[GLFW_KEY_W])
     player.ProcessInput(MovementDir::UP, maze);
   else if (Input.keys[GLFW_KEY_S])
@@ -176,6 +176,22 @@ draw_info(Image &screen, Player &player, Maze *maze) {
     } 
 }
 
+void
+draw_win(Image &screen) {
+    Image you_win("resources/elems/you_win.png");
+    int width = you_win.Width();
+    int x_shift = screen.Width() / 4;
+    int height = you_win.Height();
+    int y_shift = screen.Height() / 4;
+
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            screen.PutPixel(x + x_shift, y + y_shift, you_win.GetPixel(x, height - y - 1));
+        }
+    }
+
+}
+
 int main(int argc, char** argv)
 {
 	if(!glfwInit())
@@ -251,7 +267,6 @@ int main(int argc, char** argv)
 	Image screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
-
   //game loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -264,8 +279,12 @@ int main(int argc, char** argv)
         current_room->Draw(screenBuffer);
         player.Draw(screenBuffer);
         draw_info(screenBuffer, player, current_room);
-        if (!player.alive) {
+        if (player.state == PlayerState::DEAD) {
             game_over(screenBuffer);
+        } else {
+            if (player.state == PlayerState::WIN) {
+                draw_win(screenBuffer);        
+            }
         }
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
         glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;

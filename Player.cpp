@@ -1,6 +1,6 @@
 #include "Player.h"
 #include <iostream>
-Image player_img("resources/player/1.png");
+Image player_img("resources/player/right_0.png");
 
 bool Player::Moved() const
 {
@@ -70,7 +70,11 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
   }
   keys_obtained += (*maze)->update_keys(coords);
   if ((*maze)->fell(coords)) {
-      alive = false;
+      state = PlayerState::DEAD;
+      return;
+  }
+  if ((*maze)->reach_exit(coords)) {
+      state = PlayerState::WIN;
       return;
   }
 }
