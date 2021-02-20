@@ -4,9 +4,9 @@
 #include "Image.h"
 #include "Player.h"
 
-Image wall_img("resources/elems/wall.jpg");
-Image floor_img("resources/elems/floor.jpg");
-Image empty_img("resources/elems/empty.jpg");
+Image wall_img("resources/elems/wall.png");
+Image floor_img("resources/elems/floor.png");
+Image empty_img("resources/elems/empty.png");
 Image doors_opened_img("resources/elems/doors_opened.jpg");
 Image doors_closed_img("resources/elems/doors_closed.jpg");
 Image key_img("resources/elems/key.png");
@@ -82,7 +82,8 @@ bool
 Maze::free(Point coords) {
     int x = coords.x / tileSize;
     int y = coords.y / tileSize;
-    return field[x][y] == Maze_Point::FLOOR || field[x][y] == Maze_Point::DOOR_OPENED;
+    return field[x][y] == Maze_Point::FLOOR ||
+        field[x][y] == Maze_Point::DOOR_OPENED || field[x][y] == Maze_Point::EMPTY;
 }
 
 Point Maze::Get_Player() {
@@ -318,4 +319,18 @@ Maze::Get_Pixel(int x, int y) {
         default:
             return floor_img.GetPixel(x % tileSize, y % tileSize);
        }
+}
+
+bool
+Maze::fell(Point coords) {
+    int x = coords.x / tileSize;
+    int y = coords.y / tileSize;
+    Point center;
+    coords.x += tileSize / 2;
+    center.x = x * tileSize + tileSize / 2;
+    center.y = y * tileSize + tileSize / 2;
+    if (field[x][y] == Maze_Point::EMPTY && dist(coords, center) <= tileSize / 3) {
+        return true;
+    }
+    return false;
 }

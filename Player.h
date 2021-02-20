@@ -47,6 +47,7 @@ struct Maze {
         Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
         bool open_nearest_door(Point coords);
+        bool fell(Point coords);
         int update_keys(Point coords);
         int opened_door(Point coords);
         Point left_door();
@@ -73,14 +74,14 @@ enum class MovementDir
 struct Player
 {
   explicit Player(Point pos = {.x = 10, .y = 10}) :
-                 coords(pos), old_coords(coords), keys_obtained(0) {};
+                 coords(pos), old_coords(coords), keys_obtained(0), alive(true) {};
 
   bool Moved() const;
   void ProcessInput(MovementDir dir, Maze **maze);
   void Draw(Image &screen);
-
-private:
+  bool alive;
   int keys_obtained;
+private:
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};

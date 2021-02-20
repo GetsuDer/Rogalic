@@ -46,6 +46,7 @@ void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, in
 
 void processPlayerMovement(Player &player, Maze **maze)
 {
+    if (!player.alive) return;
   if (Input.keys[GLFW_KEY_W])
     player.ProcessInput(MovementDir::UP, maze);
   else if (Input.keys[GLFW_KEY_S])
@@ -115,6 +116,64 @@ int initGL()
   std::cout << "press ESC to exit" << std::endl;
 
 	return 0;
+}
+
+void
+game_over(Image &screen) {
+    Image you_died("resources/elems/you_died.png");
+    int width = you_died.Width();
+    int x_shift = screen.Width() / 4;
+    int height = you_died.Height();
+    int y_shift = screen.Height() / 4;
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            screen.PutPixel(i + x_shift, j + y_shift, you_died.GetPixel(i, height - j - 1));
+        }   
+    }
+}
+
+int
+number_len(int n) {
+    int res = 1;
+    while (n > 9) {
+        n /= 10;
+        res++;
+    }
+    return res;
+}
+
+void
+draw_digit(Image &screen, int pos, int digit, int x_shift, int y_shift) {
+    std::string digit_name = std::to_string(digit);
+    digit_name = "resources/elems/" + digit_name + ".png";
+    Image digit_img(digit_name);
+    int width = digit_img.Width();
+    int height = digit_img.Height();
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            screen.PutPixel(x_shift + width * pos + x, y_shift + y, digit_img.GetPixel(x, height - y - 1));
+        }
+    }
+}
+
+void
+draw_info(Image &screen, Player &player, Maze *maze) {
+    static Image keys_obtained("resources/elems/keys_obtained.jpg");
+    int y_keys = tileSize * maze->size;
+    static int width = keys_obtained.Width();
+    static int height = keys_obtained.Height();
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            screen.PutPixel(x, y + y_keys, keys_obtained.GetPixel(x, height - y - 1));
+        }
+    }
+    int n = player.keys_obtained;
+    int n_len = number_len(n);
+    while (n_len) {
+        draw_digit(screen, n_len - 1, n % 10, width, y_keys);
+        n /= 10;
+        n_len--;
+    } 
 }
 
 int main(int argc, char** argv)
@@ -204,7 +263,10 @@ int main(int argc, char** argv)
         processPlayerMovement(player, &current_room);
         current_room->Draw(screenBuffer);
         player.Draw(screenBuffer);
-
+        draw_info(screenBuffer, player, current_room);
+        if (!player.alive) {
+            game_over(screenBuffer);
+        }
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
         glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
 

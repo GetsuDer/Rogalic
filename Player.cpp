@@ -69,6 +69,10 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       return;
   }
   keys_obtained += (*maze)->update_keys(coords);
+  if ((*maze)->fell(coords)) {
+      alive = false;
+      return;
+  }
 }
 
 
