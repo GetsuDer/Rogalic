@@ -145,7 +145,7 @@ number_len(int n) {
 void
 draw_digit(Image &screen, int pos, int digit, int x_shift, int y_shift) {
     std::string digit_name = std::to_string(digit);
-    digit_name = "resources/elems/" + digit_name + ".png";
+    digit_name = "resources/elems/digits/" + digit_name + ".png";
     Image digit_img(digit_name);
     int width = digit_img.Width();
     int height = digit_img.Height();
@@ -158,7 +158,7 @@ draw_digit(Image &screen, int pos, int digit, int x_shift, int y_shift) {
 
 void
 draw_info(Image &screen, Player &player, Maze *maze) {
-    static Image keys_obtained("resources/elems/keys_obtained.jpg");
+    static Image keys_obtained("resources/elems/keys_obtained.png");
     int y_keys = tileSize * maze->size;
     static int width = keys_obtained.Width();
     static int height = keys_obtained.Height();
@@ -230,22 +230,27 @@ int main(int argc, char** argv)
     labirint_in.open("resources/rooms/labirint");
     int rooms_number;
     std::string room_name;
-
     labirint_in >> rooms_number;
+    std::vector <std::string> room_types(rooms_number);
+    for (int i = 0; i < rooms_number; i++) {
+        labirint_in >> room_types[i];
+    }
 
     std::vector <Maze> rooms;
     for (int i = 0; i < rooms_number; i++) {
-        labirint_in >> room_name;
-        room_name = "resources/rooms/" + room_name;
-        rooms.push_back(Maze(room_name));
+        room_name = "resources/rooms/" + std::to_string(i + 1);
+        rooms.push_back(Maze(room_name, room_types[i]));
     }
+    std::cout << rooms[3].path << '\n';
     std::string start_room;
     labirint_in >> start_room;
     start_room = "resources/rooms/" + start_room; 
     Maze *current_room = NULL;
+
     for (int i = 0; i < rooms_number; i++) {
-        if (rooms[i].name == start_room) {
+        if (rooms[i].path == start_room) {
             current_room = &(rooms[i]);
+            std::cout << "start room founded\n";
         }
         int doors_number;
         labirint_in >> doors_number;
@@ -255,8 +260,9 @@ int main(int argc, char** argv)
             labirint_in >> door_type >> other_room;
             other_room = "resources/rooms/" + other_room;
             for (int k = 0; k < rooms_number; k++) {
-                if (rooms[k].name == other_room) {
+                if (rooms[k].path == other_room) {
                     rooms[i].others[door_type - 1] = &(rooms[k]);
+                   
                 }
             }
         }

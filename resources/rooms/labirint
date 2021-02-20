@@ -1,8 +1,7 @@
-5
-roomA roomB roomC roomD roomE
-roomA
-4 1 roomB 2 roomC 3 roomD 4 roomE
-1 3 roomA
-1 4 roomA
-1 1 roomA
-1 2 roomA
+5 roomA roomA roomB roomC roomD
+1
+4 1 2 2 3 3 4 4 5
+1 3 1
+1 4 1
+1 1 1
+1 2 1

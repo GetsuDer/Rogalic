@@ -41,8 +41,10 @@ struct Key {
     Point coords;
 };
 struct Maze {
-        std::string name;
-        Maze(std::string &path);
+        std::string type;
+        std::string path;
+        Image *wall, *floor, *empty, *exit;
+        Maze(std::string &_path, std::string &_type);
         void Draw_Lower(Image &screen);
         void Draw_Higher(Image &screen);
         Point Get_Player();
@@ -60,7 +62,7 @@ struct Maze {
         Point from_door(int door);
         std::vector <Key> keys;
         Point Start_Pos;
-        Point exit;
+        Point exit_point;
         int size;
         Maze *others[4];
         std::vector <std::vector <Maze_Point>> field;
