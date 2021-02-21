@@ -105,6 +105,13 @@ bool
 Maze::free(Point coords) {
     int x = coords.x / tileSize;
     int y = coords.y / tileSize;
+    if (x < 0 || y < 0) {
+        return false;
+    }
+    if (x >= field.size() || y >= field[x].size()) {
+        return false;
+    }
+
     return field[x][y] == Maze_Point::FLOOR ||
         field[x][y] == Maze_Point::DOOR_OPENED || field[x][y] == Maze_Point::EMPTY || 
         field[x][y] == Maze_Point::EXIT;
@@ -411,7 +418,7 @@ Maze::attack(Point coords) {
 
 Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30),
         attack_animation("resources/monsters/1/attack/", 6, 100),
-        dying_animation("resources/monsters/1/dying/", 7, 50) {
+        dying_animation("resources/monsters/1/dying/", 10, 200) {
     coords.x = x * tileSize;
     coords.y = y * tileSize;
     start.x = x * tileSize;
@@ -436,30 +443,15 @@ Monster::Draw(Image &screen, Maze *maze) {
             if (dying_ind == dying_animation.len()) {
                 state = MonsterState::DEAD;
             }
-            return;
+            break;
         case MonsterState::DEAD:
-            img = dying_animation.Draw(dying_animation.len() - 1);
             return;
+         //   img = dying_animation.Draw(dying_animation.len() - 1);
         case MonsterState::SLEEP:
             img = walk_animation.Draw(0);
-            for (int x = 0; x < tileSize; x++) {
-                for (int y = 0; y < tileSize; y++) {
-                    screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(screen.GetPixel(coords.x + x, coords.y + y),
-                                  img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
-                }
-            }
             break;
-                    
         case MonsterState::WALK:
             img = walk_animation.Draw();
-            for (int x = 0; x < tileSize; x++) {
-                for (int y = 0; y < tileSize; y++) {
-                    screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(screen.GetPixel(coords.x + x, coords.y + y),
-                                img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
-                }
-            }
             break;
         case MonsterState::ATTACK:
             img = attack_animation.Draw(attack_ind);
@@ -470,16 +462,14 @@ Monster::Draw(Image &screen, Maze *maze) {
             if (attack_ind == 0) {
                 attacking = 0;
             }
-            for (int x = 0; x < tileSize; x++) {
-                for (int y = 0; y < tileSize; y++) {
-                    screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(screen.GetPixel(coords.x + x, coords.y + y),
-                               img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
-                }
-            }
-
-        default:
             break;
+    }
+    for (int x = 0; x < tileSize; x++) {
+        for (int y = 0; y < tileSize; y++) {
+            screen.PutPixel(coords.x + x, coords.y + y,
+                    blend(screen.GetPixel(coords.x + x, coords.y + y),
+                        img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+        }
     }
 
 }
@@ -654,4 +644,30 @@ Fire::update(Maze *maze) {
     coords.x += x_speed;
     coords.y += y_speed;
 
+    Point center;
+    center.x = coords.x + tileSize / 2;
+    center.y = coords.y + tileSize / 2;
+    if (!maze->free(center)) {
+        alive = false;
+        return;
+    } else {
+        if (maze->field[center.x / tileSize][center.y / tileSize] == Maze_Point::DOOR_OPENED) {
+            alive = false;
+            return;
+        }
+    }
+    Point heart;
+    for (int i = 0; i < maze->monsters.size(); i++) {
+
+        if (maze->monsters[i]->state != MonsterState::WALK && 
+                maze->monsters[i]->state != MonsterState::SLEEP) {
+            continue;
+        }
+        heart.x = maze->monsters[i]->coords.x + tileSize / 2;
+        heart.y = maze->monsters[i]->coords.y + tileSize / 2;
+        if (dist(center, heart) < tileSize / 2) {
+            alive = false;
+            maze->monsters[i]->state = MonsterState::DYING;
+        }
+    }
 }
