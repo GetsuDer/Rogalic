@@ -395,7 +395,19 @@ Maze::reach_exit(Point coords) {
     return dist(coords, center) < tileSize / 2;
 }
 
-Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30) {
+bool
+Maze::attack(Point coords) {
+    for (int i = 0; i < monsters.size(); i++) {
+        if (monsters[i]->hit(coords)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30),
+        attack_animation("resources/monsters/1/attack/", 6, 100) {
     coords.x = x * tileSize;
     coords.y = y * tileSize;
     start.x = x * tileSize;
@@ -403,6 +415,8 @@ Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 
 
     state = MonsterState::SLEEP;
     look = MovementDir::RIGHT;
+    attacking = 0;
+    attack_ind = 0;
 }
 
 void
@@ -432,6 +446,25 @@ Monster::Draw(Image &screen, Maze *maze) {
                 }
             }
             break;
+        case MonsterState::ATTACK:
+            img = attack_animation.Draw(attack_ind);
+            attack_ind += attacking;
+            if (attack_ind == attack_animation.len() - 1) {
+                attacking = -1;
+            }
+            if (attack_ind == 0) {
+                attacking = 0;
+            }
+            for (int x = 0; x < tileSize; x++) {
+                for (int y = 0; y < tileSize; y++) {
+                    screen.PutPixel(coords.x + x, coords.y + y,
+                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                               img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+                }
+            }
+
+        default:
+            break;
     }
 
 }
@@ -440,23 +473,34 @@ Monster::Draw(Image &screen, Maze *maze) {
 void
 Maze::processPlayer(Point player) {
     double monster_attack_distance = tileSize / 2;
-    double monster_awake_distance = 3 * tileSize;
+    double monster_awake_distance = 5 * tileSize;
     for (int i = 0; i < monsters.size(); i++) {
         Monster *monster = monsters[i];
+        double player_dist = dist(player, monster->coords);
         switch (monster->state) {
 
             case MonsterState::SLEEP:
-                if (dist(player, monster->coords) < monster_awake_distance) {
+                if (player_dist < monster_awake_distance) {
                     monster->state = MonsterState::WALK;
                 }
                 return;
 
             case MonsterState::WALK:
-                if (dist(player, monster->coords) > monster_awake_distance) {
+                if (player_dist > monster_awake_distance) {
                     monster->state = MonsterState::SLEEP;
                     return;
                 }
+                if (player_dist <= monster_attack_distance) {
+                    monster->state = MonsterState::ATTACK;
+                    monster->attacking = 1;
+                    return;
+                }
                 monster->MoveTo(player, this);
+            case MonsterState::ATTACK:
+                if (!monster->attacking) {
+                    monster->state = MonsterState::WALK;
+                    return;
+                }
             default:
                 break;
         }
@@ -466,17 +510,43 @@ Maze::processPlayer(Point player) {
 void
 Monster::MoveTo(Point player, Maze *maze) {
     int movedist = 3;
-    if (player.x > coords.x) {
+    Point heart;
+    heart.x = player.x + tileSize / 2;
+    heart.y = player.y + tileSize / 2;
+    Point tale;
+    tale.x = (look == MovementDir::LEFT) ? coords.x + tileSize : coords.x;
+    tale.y = coords.y + tileSize / 2;
+
+    if (heart.x > tale.x) {
         coords.x += movedist;
         look = MovementDir::RIGHT;
-    } else if (player.x < coords.x) {
+    } else if (heart.x < tale.x) {
         coords.x -= movedist;
         look = MovementDir::LEFT;
     }
-    if (player.y > coords.y) {
+    if (heart.y > tale.y) {
         coords.y += movedist;
-    } else if (player.y < coords.y) {
+    } else if (heart.y < tale.y) {
         coords.y -= movedist;
+    }
+}
+
+bool
+Monster::hit(Point player) {
+    Point heart;
+    heart.x = player.x + tileSize / 2;
+    heart.y = player.y + tileSize / 2;
+    double hit_distance = tileSize / 2;
+    if (attack_ind == attack_animation.img.size() - 1) {
+        Point tale;
+        tale.x = (look == MovementDir::RIGHT) ? coords.x + tileSize : coords.x;
+        tale.y = coords.y + tileSize / 2;
+        if (dist(heart, tale) < hit_distance) {
+            return true;
+        }
+        return false;
+    } else {
+        return false;
     }
 }
 
@@ -520,4 +590,9 @@ Animation::Draw(int ind) {
 Image *
 Animation::Current() {
     return img[img_ind];
+}
+
+int
+Animation::len() {
+    return img.size();
 }

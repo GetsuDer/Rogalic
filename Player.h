@@ -28,6 +28,7 @@ struct Animation {
     Animation(std::string path_to_img, int img_number, int times_max);
     Image *Draw(int ind = -1);
     Image *Current();
+    int len();
 
 };
 
@@ -80,7 +81,7 @@ struct Maze {
 
         Maze(std::string &_path, std::string &_type);
         void processPlayer(Point coords);
-        
+        bool attack(Point coords);
         void Draw_Lower(Image &screen);
         void Draw_Higher(Image &screen);
         Point Get_Player();
@@ -113,11 +114,15 @@ struct Monster{
     Monster(int x, int y);
     void Draw(Image &screen, Maze *maze);
     void MoveTo(Point player, Maze *maze);
+    bool hit(Point coords);
     MonsterState state;
     Point coords;
     Point start;
     MovementDir look;
     Animation walk_animation;
+    Animation attack_animation;
+    int attacking;
+    int attack_ind;
 };
 
 enum class PlayerState
@@ -151,7 +156,7 @@ private:
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};
-  int move_speed = 4;
+  int move_speed = 6;
 
 };
 

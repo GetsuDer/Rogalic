@@ -84,10 +84,10 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       return;
   }
 
-  /*if ((*maze)->attack(coords)) {
+  if ((*maze)->attack(coords)) {
       state = PlayerState::DEAD;
       return;
-  }*/
+  }
 }
 
 Point
