@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 
 constexpr GLsizei WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 1024;
+bool firing = false;
 
 struct InputState
 {
@@ -39,13 +40,21 @@ void OnKeyboardPressed(GLFWwindow* window, int key, int scancode, int action, in
 	    default:
 		    if (action == GLFW_PRESS)
                 Input.keys[key] = true;
-		    else if (action == GLFW_RELEASE)
+		    else if (action == GLFW_RELEASE) {
                 Input.keys[key] = false;
+                if (key == GLFW_KEY_Q) {
+                    firing = true;
+                }
+            }
 	}
 }
 
 void processPlayerMovement(Player &player, Maze **maze)
 {
+  if (firing) {
+      firing = false;
+      player.ProcessInput(MovementDir::FIRE, maze, Input.lastX, Input.lastY);
+  }
   if (Input.keys[GLFW_KEY_W])
     player.ProcessInput(MovementDir::UP, maze);
   else if (Input.keys[GLFW_KEY_S])
@@ -308,6 +317,8 @@ int main(int argc, char** argv)
                     draw_win(screenBuffer);        
                 }
             }
+        //    std::cout << Input.lastX << ' ' << Input.lastY << '\n';
+            screenBuffer.PutPixel(Input.lastX, Input.lastY, backgroundColor);
         }
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
         glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;

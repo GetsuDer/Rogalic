@@ -61,6 +61,7 @@ enum class MovementDir {
     LEFT, 
     RIGHT,
     ACTION,
+    FIRE,
     NONE
 };
 
@@ -73,6 +74,7 @@ enum class MonsterState {
 };
 
 struct Monster;
+struct Fire;
 
 struct Maze {
         std::string type;
@@ -108,6 +110,7 @@ struct Maze {
         Animation exit_animation;
 
         std::vector <Monster *> monsters;
+        std::vector <Fire *> fires;
 };
 
 struct Monster{
@@ -123,13 +126,30 @@ struct Monster{
     Animation attack_animation;
     int attacking;
     int attack_ind;
+    Animation dying_animation;
+    bool dying;
+    int dying_ind;
+};
+
+struct Fire {
+    Point coords;
+    Animation fire_animation;
+    int x_speed;
+    int y_speed;
+    int time_to_live;
+    bool alive;
+
+    Fire(int x, int y, int _x_speed, int _y_speed);
+
+    void Draw(Image &screen, Maze *maze);
+    void update(Maze *maze);
 };
 
 enum class PlayerState
 {
     DEAD,
     ALIVE,
-    WIN
+    WIN,
 };
 
 struct Player
@@ -143,7 +163,7 @@ struct Player
                  };
 
   bool Moved() const;
-  void ProcessInput(MovementDir dir, Maze **maze);
+  void ProcessInput(MovementDir dir, Maze **maze, int mouseX = -1, int mouseY = -1);
   void Draw(Image &screen);
   PlayerState state;
   int keys_obtained;
@@ -151,12 +171,11 @@ struct Player
 private:
   MovementDir look;
   bool active;
-  Animation walk_animation;
-  
+  Animation walk_animation; 
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};
-  int move_speed = 6;
+  int move_speed = 4;
 
 };
 

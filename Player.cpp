@@ -10,28 +10,36 @@ bool Player::Moved() const
     return true;
 }
 
-void Player::ProcessInput(MovementDir dir, Maze **maze)
+void Player::ProcessInput(MovementDir dir, Maze **maze, int mouseX, int mouseY)
 {
   int move_dist = move_speed * 1;
   Point new_coords = {.x = coords.x, .y = coords.y};
   Point check_cage_1 = {.x = coords.x, .y = coords.y};
   Point check_cage_2 = {.x = coords.x, .y = coords.y};
-  active = true;
+  
+  active = false;
+
+  Fire *fire = NULL;
+  int firex, firey;
+  double xspeed, yspeed, speed;
   switch(dir)
   {
     case MovementDir::UP:
+      active = true;
       new_coords.y += move_dist;
       check_cage_1.y += tileSize + move_dist - 1;
       check_cage_2.y += tileSize + move_dist - 1;
       check_cage_2.x += tileSize - 1;
       break;
     case MovementDir::DOWN:
+      active = true;
       new_coords.y -= move_dist;
       check_cage_1.y -= move_dist;
       check_cage_2.y -= move_dist;
       check_cage_2.x += tileSize - 1;
       break;
     case MovementDir::LEFT:
+      active = true;
       look = MovementDir::LEFT;
       new_coords.x -= move_dist;
       check_cage_1.x -= move_dist;
@@ -39,6 +47,7 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       check_cage_2.y += tileSize - 1;
       break;
     case MovementDir::RIGHT:
+      active = true;
       look = MovementDir::RIGHT;
       new_coords.x += move_dist;
       check_cage_1.x += tileSize + move_dist - 1;
@@ -52,8 +61,17 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
         }
       }
       break;
+    case MovementDir::FIRE:
+      firex = coords.x + tileSize / 2;
+      firey = coords.y + tileSize / 2;
+    
+      xspeed = mouseX - coords.x;
+      yspeed = (1024 - mouseY) - coords.y;
+      speed = sqrt(xspeed * xspeed + yspeed * yspeed);
+      fire = new Fire(firex, firey, (xspeed / speed) * 7, (yspeed / speed) * 7);
+      (*maze)->fires.push_back(fire);
+      break;
     case MovementDir::NONE:
-      active = false;
       break;
     default:
       break;

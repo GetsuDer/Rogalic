@@ -342,6 +342,9 @@ Maze::Draw_Lower(Image &screen) {
         monsters[monster]->Draw(screen, this);
     }
 
+    for (int i = 0; i < fires.size(); i++) {
+        fires[i]->Draw(screen, this);
+    }
 }
 void
 Maze::Draw_Higher(Image &screen) {
@@ -407,7 +410,8 @@ Maze::attack(Point coords) {
 
 
 Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30),
-        attack_animation("resources/monsters/1/attack/", 6, 100) {
+        attack_animation("resources/monsters/1/attack/", 6, 100),
+        dying_animation("resources/monsters/1/dying/", 7, 50) {
     coords.x = x * tileSize;
     coords.y = y * tileSize;
     start.x = x * tileSize;
@@ -417,20 +421,31 @@ Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 
     look = MovementDir::RIGHT;
     attacking = 0;
     attack_ind = 0;
+
+    dying = false;
+    dying_ind = 0;
 }
 
 void
 Monster::Draw(Image &screen, Maze *maze) {
     Image *img;
     switch (state) {
+        case MonsterState::DYING:
+            img = dying_animation.Draw(dying_ind);
+            dying_ind++;
+            if (dying_ind == dying_animation.len()) {
+                state = MonsterState::DEAD;
+            }
+            return;
         case MonsterState::DEAD:
+            img = dying_animation.Draw(dying_animation.len() - 1);
             return;
         case MonsterState::SLEEP:
             img = walk_animation.Draw(0);
             for (int x = 0; x < tileSize; x++) {
                 for (int y = 0; y < tileSize; y++) {
                     screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                            blend(screen.GetPixel(coords.x + x, coords.y + y),
                                   img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
                 }
             }
@@ -441,7 +456,7 @@ Monster::Draw(Image &screen, Maze *maze) {
             for (int x = 0; x < tileSize; x++) {
                 for (int y = 0; y < tileSize; y++) {
                     screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                            blend(screen.GetPixel(coords.x + x, coords.y + y),
                                 img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
                 }
             }
@@ -458,7 +473,7 @@ Monster::Draw(Image &screen, Maze *maze) {
             for (int x = 0; x < tileSize; x++) {
                 for (int y = 0; y < tileSize; y++) {
                     screen.PutPixel(coords.x + x, coords.y + y,
-                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                            blend(screen.GetPixel(coords.x + x, coords.y + y),
                                img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
                 }
             }
@@ -472,13 +487,23 @@ Monster::Draw(Image &screen, Maze *maze) {
 
 void
 Maze::processPlayer(Point player) {
+    for (int i = 0; i < fires.size(); i++) {
+        fires[i]->update(this);
+    }
+    int size = fires.size();
+    for (int i = size - 1; i >= 0; i--) {
+        if (!fires[i]->alive) {
+            fires.erase(fires.begin() + i);
+        }
+    }
+
+
     double monster_attack_distance = tileSize / 2;
     double monster_awake_distance = 5 * tileSize;
     for (int i = 0; i < monsters.size(); i++) {
         Monster *monster = monsters[i];
         double player_dist = dist(player, monster->coords);
         switch (monster->state) {
-
             case MonsterState::SLEEP:
                 if (player_dist < monster_awake_distance) {
                     monster->state = MonsterState::WALK;
@@ -509,7 +534,7 @@ Maze::processPlayer(Point player) {
 
 void
 Monster::MoveTo(Point player, Maze *maze) {
-    int movedist = 3;
+    int movedist = 2;
     Point heart;
     heart.x = player.x + tileSize / 2;
     heart.y = player.y + tileSize / 2;
@@ -595,4 +620,38 @@ Animation::Current() {
 int
 Animation::len() {
     return img.size();
+}
+
+Fire::Fire(int x, int y, int _x_speed, int _y_speed): fire_animation("resources/player/fire/", 6, 3) {
+    coords.x = x;
+    coords.y = y;
+    x_speed = _x_speed;
+    y_speed = _y_speed;
+    alive = true;
+    time_to_live = 100;
+}
+
+void
+Fire::Draw(Image &screen, Maze *maze) {
+    Image *img = fire_animation.Draw();
+    for (int x = 0; x < tileSize; x++) {
+        for (int y = 0; y < tileSize; y++) {
+            screen.PutPixel(coords.x + x, coords.y + y,
+                    blend(screen.GetPixel(coords.x + x, coords.y + y),
+                        img->GetPixel(x, tileSize - y - 1)));
+        }
+    }
+}
+
+void
+Fire::update(Maze *maze) {
+    time_to_live--;
+    if (time_to_live <= 0) {
+        alive = false;
+        return;
+    }
+
+    coords.x += x_speed;
+    coords.y += y_speed;
+
 }
