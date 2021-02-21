@@ -296,6 +296,7 @@ int main(int argc, char** argv)
         glfwPollEvents();
         if (player.state == PlayerState::ALIVE) {
             processPlayerMovement(player, &current_room);
+            current_room->processPlayer(player.placed());
             current_room->Draw_Lower(screenBuffer);
             player.Draw(screenBuffer);
             current_room->Draw_Higher(screenBuffer);

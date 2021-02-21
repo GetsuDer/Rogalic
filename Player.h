@@ -40,11 +40,34 @@ struct Key {
     bool obtained;
     Point coords;
 };
+
+enum class MovementDir {
+    UP,
+    DOWN,
+    LEFT, 
+    RIGHT,
+    ACTION,
+    NONE
+};
+
+enum class MonsterState {
+    SLEEP,
+    WALK,
+    ATTACK,
+    DEAD,
+    DYING
+};
+
+struct Monster;
+
 struct Maze {
         std::string type;
         std::string path;
         Image *wall, *floor, *empty;
+
         Maze(std::string &_path, std::string &_type);
+        void processPlayer(Point coords);
+        
         void Draw_Lower(Image &screen);
         void Draw_Higher(Image &screen);
         Point Get_Player();
@@ -75,16 +98,22 @@ struct Maze {
         int exit_img_ind;
         int exit_img_times;
         bool exit_up;
+
+        std::vector <Monster *> monsters;
 };
 
-enum class MovementDir
-{
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT,
-  ACTION,
-  NONE
+struct Monster{
+    Monster(int x, int y);
+    void Draw(Image &screen, Maze *maze);
+    void MoveTo(Point player, Maze *maze);
+    MonsterState state;
+    Point coords;
+    Point start;
+    MovementDir look;
+    std::vector <Image *> walk;
+    int walk_img_ind;
+    int walk_img_times;
+    bool walk_up;
 };
 
 enum class PlayerState
@@ -115,6 +144,7 @@ struct Player
   void Draw(Image &screen);
   PlayerState state;
   int keys_obtained;
+  Point placed();
 private:
   MovementDir look;
   bool active;

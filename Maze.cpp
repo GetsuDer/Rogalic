@@ -35,6 +35,7 @@ Maze::Maze(std::string &_path, std::string &_type) {
     exit_point.y = -1;
     bool first_elem = true;
     std::string line;
+    Monster *monster = NULL;
     while (!input.eof()) {
         getline(input, line);
         if (line.empty()) break;
@@ -72,6 +73,11 @@ Maze::Maze(std::string &_path, std::string &_type) {
                     field[height - 1].push_back(Maze_Point::EXIT);
                     exit_point.x = i;
                     exit_point.y = size - height;
+                    break;
+                case 'e':
+                    field[height - 1].push_back(Maze_Point::FLOOR);
+                    monster = new Monster(i, size - height);
+                    monsters.push_back(monster);
                     break;
                 default:
                     break;
@@ -382,6 +388,10 @@ Maze::Draw_Lower(Image &screen) {
     
     }
 
+    for (int monster = 0; monster < monsters.size(); monster++) {
+        monsters[monster]->Draw(screen, this);
+    }
+
 }
 void
 Maze::Draw_Higher(Image &screen) {
@@ -433,4 +443,112 @@ Maze::reach_exit(Point coords) {
     center.x = exit_point.x * tileSize + tileSize / 2;
     center.y = exit_point.y * tileSize + tileSize / 2;
     return dist(coords, center) < tileSize / 2;
+}
+
+Monster::Monster(int x, int y) {
+    coords.x = x * tileSize;
+    coords.y = y * tileSize;
+    start.x = x * tileSize;
+    start.y = y * tileSize;
+
+    state = MonsterState::SLEEP;
+    look = MovementDir::RIGHT;
+    int walk_img_num = 4;
+    for (int i = 0; i < walk_img_num; i++) {
+        std::string path = "resources/monsters/1/walk/" + std::to_string(i + 1) + ".png";
+        std::cout << path << '\n';
+        Image *img = new Image(path);
+        if (img->Width() == -1) {
+            std::cout << "FAIL\n";
+        }
+        walk.push_back(img);
+    }
+}
+
+void
+Monster::Draw(Image &screen, Maze *maze) {
+    switch (state) {
+        case MonsterState::DEAD:
+            return;
+        case MonsterState::SLEEP:
+            for (int x = 0; x < tileSize; x++) {
+                for (int y = 0; y < tileSize; y++) {
+                    screen.PutPixel(coords.x + x, coords.y + y,
+                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                                  walk[0]->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+                }
+            }
+            break;
+                    
+        case MonsterState::WALK:
+            int img = walk_img_ind;
+            walk_img_times++;
+            if (walk_img_times > 20) {
+                if (walk_up) {
+                    walk_img_ind++;
+                    if (walk_img_ind == walk.size() - 1) {
+                        walk_up = false;
+                    }    
+                } else {
+                    walk_img_ind--;
+                    if (!walk_img_ind) {
+                        walk_up = true;
+                    }
+                }
+                walk_img_times = 0;
+            }
+            for (int x = 0; x < tileSize; x++) {
+                for (int y = 0; y < tileSize; y++) {
+                    screen.PutPixel(coords.x + x, coords.y + y,
+                            blend(maze->Get_Pixel(coords.x + x, coords.y + y),
+                                  walk[img]->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+                }
+            }
+            break;
+    }
+
+}
+
+
+void
+Maze::processPlayer(Point player) {
+    double monster_attack_distance = tileSize / 2;
+    double monster_awake_distance = 3 * tileSize;
+    for (int i = 0; i < monsters.size(); i++) {
+        Monster *monster = monsters[i];
+        switch (monster->state) {
+
+            case MonsterState::SLEEP:
+                if (dist(player, monster->coords) < monster_awake_distance) {
+                    monster->state = MonsterState::WALK;
+                }
+                return;
+
+            case MonsterState::WALK:
+                if (dist(player, monster->coords) > monster_awake_distance) {
+                    monster->state = MonsterState::SLEEP;
+                    return;
+                }
+                monster->MoveTo(player, this);
+            default:
+                break;
+        }
+    }
+}
+
+void
+Monster::MoveTo(Point player, Maze *maze) {
+    int movedist = 3;
+    if (player.x > coords.x) {
+        coords.x += movedist;
+        look = MovementDir::RIGHT;
+    } else if (player.x < coords.x) {
+        coords.x -= movedist;
+        look = MovementDir::LEFT;
+    }
+    if (player.y > coords.y) {
+        coords.y += movedist;
+    } else if (player.y < coords.y) {
+        coords.y -= movedist;
+    }
 }

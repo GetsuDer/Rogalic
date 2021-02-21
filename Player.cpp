@@ -83,8 +83,17 @@ void Player::ProcessInput(MovementDir dir, Maze **maze)
       state = PlayerState::WIN;
       return;
   }
+
+  /*if ((*maze)->attack(coords)) {
+      state = PlayerState::DEAD;
+      return;
+  }*/
 }
 
+Point
+Player::placed() {
+    return coords;
+}
 
 void Player::Draw(Image &screen)
 {
