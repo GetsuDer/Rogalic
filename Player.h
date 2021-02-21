@@ -83,7 +83,7 @@ struct Maze {
 
         Maze(std::string &_path, std::string &_type);
         void processPlayer(Point coords);
-        bool attack(Point coords);
+        int attack(Point coords);
         void Draw_Lower(Image &screen);
         void Draw_Higher(Image &screen);
         Point Get_Player();
@@ -114,7 +114,7 @@ struct Maze {
 };
 
 struct Monster{
-    Monster(int x, int y);
+    Monster(int x, int y, int type);
     void Draw(Image &screen, Maze *maze);
     void MoveTo(Point player, Maze *maze);
     bool hit(Point coords);
@@ -129,6 +129,11 @@ struct Monster{
     Animation dying_animation;
     bool dying;
     int dying_ind;
+    int dying_times;
+
+    int type;
+    int attack_points;
+    int hitpoints;
 };
 
 struct Fire {
@@ -151,7 +156,7 @@ enum class PlayerState
     ALIVE,
     WIN,
 };
-
+constexpr int player_hitpoints = 100;
 struct Player
 {
   explicit Player(Point pos = {.x = 10, .y = 10}) :
@@ -160,6 +165,7 @@ struct Player
                     state = PlayerState::ALIVE;
                     look = MovementDir::RIGHT;
                     active = false;
+                    hitpoints = player_hitpoints;
                  };
 
   bool Moved() const;
@@ -168,6 +174,7 @@ struct Player
   PlayerState state;
   int keys_obtained;
   Point placed();
+  int hitpoints;
 private:
   MovementDir look;
   bool active;

@@ -3,6 +3,7 @@
 #include "Player.h"
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
@@ -215,6 +216,28 @@ draw_win(Image &screen) {
 
 }
 
+void
+clearBuffer(Image &screen) {
+    for (int i = 0; i < screen.Width(); i++) {
+        for (int j = 0; j < screen.Height(); j++) {
+            screen.PutPixel(i, j, backgroundColor);
+        }
+    }
+}
+std::string
+room_type(int type) {
+    switch (type) {
+        case 0:
+            return "roomA";
+        case 1:
+            return "roomB";
+        case 2:
+            return "roomC";
+        default:
+            return "roomD";
+    }
+    
+}
 int main(int argc, char** argv)
 {
 	if(!glfwInit())
@@ -255,16 +278,14 @@ int main(int argc, char** argv)
     std::string room_name;
     labirint_in >> rooms_number;
     std::vector <std::string> room_types(rooms_number);
-    for (int i = 0; i < rooms_number; i++) {
-        labirint_in >> room_types[i];
-    }
-
     std::vector <Maze> rooms;
+    std::string type;
+    srand(time(0));
     for (int i = 0; i < rooms_number; i++) {
         room_name = "resources/rooms/" + std::to_string(i + 1);
-        rooms.push_back(Maze(room_name, room_types[i]));
+        type = room_type(rand() % 4);
+        rooms.push_back(Maze(room_name, type));
     }
-    std::cout << rooms[3].path << '\n';
     std::string start_room;
     labirint_in >> start_room;
     start_room = "resources/rooms/" + start_room; 
@@ -297,13 +318,18 @@ int main(int argc, char** argv)
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
   //game loop
-	while (!glfwWindowShouldClose(window))
+	Maze *prev_room = current_room;
+    while (!glfwWindowShouldClose(window))
 	{
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
         glfwPollEvents();
         if (player.state == PlayerState::ALIVE) {
+            if (prev_room != current_room) {
+                clearBuffer(screenBuffer);
+                prev_room = current_room;
+            }
             processPlayerMovement(player, &current_room);
             current_room->processPlayer(player.placed());
             current_room->Draw_Lower(screenBuffer);

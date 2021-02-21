@@ -102,8 +102,13 @@ void Player::ProcessInput(MovementDir dir, Maze **maze, int mouseX, int mouseY)
       return;
   }
 
-  if ((*maze)->attack(coords)) {
-      state = PlayerState::DEAD;
+  int strike = (*maze)->attack(coords);
+  if (strike > 0) {
+      hitpoints -= strike;
+      if (hitpoints <= 0) {
+          state = PlayerState::DEAD;
+          hitpoints = 0;
+      }
       return;
   }
 }
@@ -112,6 +117,7 @@ Point
 Player::placed() {
     return coords;
 }
+constexpr Pixel red {.r = 255, .g = 0, .b = 0, .a = 0};
 
 void Player::Draw(Image &screen)
 {
@@ -121,7 +127,14 @@ void Player::Draw(Image &screen)
             int x = coords.x + i;
             int y = coords.y + j;
             screen.PutPixel(x, y, 
-                    blend(screen.GetPixel(x, y), img->GetPixel((look == MovementDir::RIGHT ? i : tileSize - i - 1), tileSize - j - 1)));
+                    blend(screen.GetPixel(x, y), 
+                        img->GetPixel((look == MovementDir::RIGHT ? i : tileSize - i - 1), 
+                                        tileSize - j - 1)));
+        }
     }
-  }
+    for (int i = 0; i * 3 < hitpoints; i++) {
+        for (int j = 0; j < 5; j++) {
+            screen.PutPixel(coords.x + i, coords.y + tileSize + tileSize / 3 + j, red);
+        }
+    }
 }

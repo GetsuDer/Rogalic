@@ -77,7 +77,12 @@ Maze::Maze(std::string &_path, std::string &_type): key_animation("resources/ele
                     break;
                 case 'e':
                     field[height - 1].push_back(Maze_Point::FLOOR);
-                    monster = new Monster(i, size - height);
+                    monster = new Monster(i, size - height, 1);
+                    monsters.push_back(monster);
+                    break;
+                case 'E':
+                    field[height - 1].push_back(Maze_Point::FLOOR);
+                    monster = new Monster(i, size - height, 2);
                     monsters.push_back(monster);
                     break;
                 default:
@@ -405,20 +410,25 @@ Maze::reach_exit(Point coords) {
     return dist(coords, center) < tileSize / 2;
 }
 
-bool
+int
 Maze::attack(Point coords) {
+    int strike = 0;
     for (int i = 0; i < monsters.size(); i++) {
         if (monsters[i]->hit(coords)) {
-            return true;
+            strike += monsters[i]->attack_points;
         }
     }
-    return false;
+    return strike;
 }
 
 
-Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30),
-        attack_animation("resources/monsters/1/attack/", 6, 100),
-        dying_animation("resources/monsters/1/dying/", 10, 200) {
+Monster::Monster(int x, int y, int type): 
+    walk_animation("resources/monsters/" + std::to_string(type) + "/walk/", 4, 30),
+    attack_animation("resources/monsters/" + std::to_string(type) + "/attack/", (type == 1) ? 6 : 2, 100),
+    dying_animation("resources/monsters/" + std::to_string(type) + "/dying/", (type == 1) ? 10 : 12, (type == 1) ? 20 : 3) {
+   
+    attack_points = ((type == 1) ? 50 : 20); 
+    this->type = type;
     coords.x = x * tileSize;
     coords.y = y * tileSize;
     start.x = x * tileSize;
@@ -431,15 +441,21 @@ Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 
 
     dying = false;
     dying_ind = 0;
+    dying_times = 0;
+    hitpoints = (type == 1) ? 75 : 50; 
 }
-
+constexpr Pixel red {.r = 255, .g = 0, .b = 0, .a = 0};
 void
 Monster::Draw(Image &screen, Maze *maze) {
     Image *img;
     switch (state) {
         case MonsterState::DYING:
             img = dying_animation.Draw(dying_ind);
-            dying_ind++;
+            dying_times++;
+            if (dying_times > dying_animation.img_times_max) {
+                dying_ind++;
+                dying_times = 0;
+            }
             if (dying_ind == dying_animation.len()) {
                 state = MonsterState::DEAD;
             }
@@ -472,6 +488,12 @@ Monster::Draw(Image &screen, Maze *maze) {
         }
     }
 
+    for (int i = 0; i * 3 < hitpoints; i++) {
+        for (int j = 0; j < 5; j++) {
+            screen.PutPixel(coords.x + i, coords.y + tileSize + tileSize / 3 + j, red);
+        }
+    }
+
 }
 
 
@@ -498,23 +520,23 @@ Maze::processPlayer(Point player) {
                 if (player_dist < monster_awake_distance) {
                     monster->state = MonsterState::WALK;
                 }
-                return;
+                break;
 
             case MonsterState::WALK:
                 if (player_dist > monster_awake_distance) {
                     monster->state = MonsterState::SLEEP;
-                    return;
+                    break;
                 }
                 if (player_dist <= monster_attack_distance) {
                     monster->state = MonsterState::ATTACK;
                     monster->attacking = 1;
-                    return;
+                    break;
                 }
                 monster->MoveTo(player, this);
             case MonsterState::ATTACK:
                 if (!monster->attacking) {
                     monster->state = MonsterState::WALK;
-                    return;
+                    break;
                 }
             default:
                 break;
@@ -524,7 +546,7 @@ Maze::processPlayer(Point player) {
 
 void
 Monster::MoveTo(Point player, Maze *maze) {
-    int movedist = 2;
+    int movedist = (type == 1) ? 2 : 5;
     Point heart;
     heart.x = player.x + tileSize / 2;
     heart.y = player.y + tileSize / 2;
@@ -667,7 +689,10 @@ Fire::update(Maze *maze) {
         heart.y = maze->monsters[i]->coords.y + tileSize / 2;
         if (dist(center, heart) < tileSize / 2) {
             alive = false;
-            maze->monsters[i]->state = MonsterState::DYING;
+            maze->monsters[i]->hitpoints -= 25;
+            if (maze->monsters[i]->hitpoints <= 0) {
+                maze->monsters[i]->state = MonsterState::DYING;
+            }
         }
     }
 }
