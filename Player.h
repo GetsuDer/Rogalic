@@ -18,6 +18,19 @@ dist(Point first, Point second) {
     return sqrt(x * x + y * y);
 }
 
+struct Animation {
+    std::vector <Image *> img;
+    int img_ind;
+    int img_times;
+    int img_times_max;
+    bool up;
+
+    Animation(std::string path_to_img, int img_number, int times_max);
+    Image *Draw(int ind = -1);
+    Image *Current();
+
+};
+
 enum class Maze_Point {
     EMPTY,
     WALL,
@@ -89,15 +102,9 @@ struct Maze {
         int size;
         Maze *others[4];
         std::vector <std::vector <Maze_Point>> field;
-        std::vector <Image *> key_img;
-        int key_img_ind;
-        int key_img_times;
-        bool up;
-
-        std::vector <Image *> exit_img;
-        int exit_img_ind;
-        int exit_img_times;
-        bool exit_up;
+        
+        Animation key_animation;
+        Animation exit_animation;
 
         std::vector <Monster *> monsters;
 };
@@ -110,10 +117,7 @@ struct Monster{
     Point coords;
     Point start;
     MovementDir look;
-    std::vector <Image *> walk;
-    int walk_img_ind;
-    int walk_img_times;
-    bool walk_up;
+    Animation walk_animation;
 };
 
 enum class PlayerState
@@ -126,17 +130,11 @@ enum class PlayerState
 struct Player
 {
   explicit Player(Point pos = {.x = 10, .y = 10}) :
-                 coords(pos), old_coords(coords), keys_obtained(0) {
+                 coords(pos), old_coords(coords), keys_obtained(0),
+                 walk_animation("resources/player/", 3, 10) {
                     state = PlayerState::ALIVE;
                     look = MovementDir::RIGHT;
-                    for (int i = 0; i < 3; i++) {
-                        std::string name = "resources/player/" + std::to_string(i) + ".png";
-                        Image *img = new Image(name);
-                        walk.push_back(img);
-                    }
                     active = false;
-                    walk_ind = 0;
-                    walk_times = 0;
                  };
 
   bool Moved() const;
@@ -148,9 +146,8 @@ struct Player
 private:
   MovementDir look;
   bool active;
-  std::vector <Image *> walk;
-  int walk_ind;
-  int walk_times;
+  Animation walk_animation;
+  
   Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};

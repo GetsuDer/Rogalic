@@ -97,22 +97,13 @@ Player::placed() {
 
 void Player::Draw(Image &screen)
 {
+    Image *img = (active) ? walk_animation.Draw() : walk_animation.Draw(0);
     for (int i = 0; i < tileSize; i++) {
         for (int j = 0; j < tileSize; j++) {
             int x = coords.x + i;
             int y = coords.y + j;
-            int img = (active) ? walk_ind : 0;
-            if (active) {
-                walk_times++;
-            } else {
-                walk_times = 0;
-            }
-            if (walk_times >= 10) {
-                walk_ind = (walk_ind + 1) % walk.size();
-                walk_times = 0;
-            }
             screen.PutPixel(x, y, 
-                    blend(screen.GetPixel(x, y), walk[img]->GetPixel((look == MovementDir::RIGHT ? i : tileSize - i - 1), tileSize - j - 1)));
+                    blend(screen.GetPixel(x, y), img->GetPixel((look == MovementDir::RIGHT ? i : tileSize - i - 1), tileSize - j - 1)));
     }
   }
 }

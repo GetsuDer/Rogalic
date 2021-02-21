@@ -12,7 +12,8 @@ Key::Key(int x, int y) {
     obtained = false;
 }
 
-Maze::Maze(std::string &_path, std::string &_type) {
+Maze::Maze(std::string &_path, std::string &_type): key_animation("resources/elems/key/", 9, 30),
+    exit_animation("resources/elems/rooms/" + _type + "/exit/", 13, 7) {
     path = _path;
     type = _type;
     std::string pref = "resources/elems/rooms/" + _type;
@@ -97,28 +98,7 @@ Maze::Maze(std::string &_path, std::string &_type) {
         }
     }
     input.close();
-    int key_animation_number = 9;
-    for (int i = 0; i < key_animation_number; i++) {
-        std::string name = "resources/elems/key/" + std::to_string(i + 1) + ".png";
-        Image *img = new Image(name);
-        key_img.push_back(img);
-    }
-    key_img_ind = 0;
-    key_img_times = 0;
-    up = true;
 
-    int exit_animation_number = 13;
-    for (int i = 0; i < exit_animation_number; i++) {
-        std::string name = "resources/elems/rooms/" + type + "/exit/" + std::to_string(i + 1) + ".png";
-        Image *img = new Image(name);
-        if (img->Width() == -1) {
-            std::cout << "problem with " << name << ' ' << type << '\n';
-        }
-        exit_img.push_back(img);
-    }
-    exit_img_ind = 0;
-    exit_img_times = 0;
-    exit_up = true;
 };
 
 bool
@@ -334,26 +314,11 @@ Maze::Draw_Lower(Image &screen) {
         }
     }
     if (exit_point.x != -1) {
-        int img = exit_img_ind;
-        exit_img_times++;
-        if (exit_img_times > 10) {
-            if (exit_up) {
-                exit_img_ind++;
-                if (exit_img_ind == exit_img.size() - 1) {
-                    exit_up = false;
-                }
-            } else {
-                exit_img_ind--;
-                if (!exit_img_ind) {
-                    exit_up = true;
-                }
-            }
-            exit_img_times = 0;
-        }
+        Image *img = exit_animation.Draw();
         for (int x = 0; x < tileSize; x++) {
             for (int y = 0; y < tileSize; y++) {
                 screen.PutPixel(exit_point.x * tileSize + x, exit_point.y * tileSize + y,
-                        blend(floor->GetPixel(x, tileSize - y - 1), exit_img[img]->GetPixel(x, tileSize - y - 1)));
+                        blend(floor->GetPixel(x, tileSize - y - 1), img->GetPixel(x, tileSize - y - 1)));
             }
         }
     }
@@ -361,28 +326,13 @@ Maze::Draw_Lower(Image &screen) {
         if (keys[key].obtained) continue;
         int x = keys[key].coords.x;
         int y = keys[key].coords.y;
-        int img = key_img_ind;
-        key_img_times++;
-        if (key_img_times > 30) {
-            if (up) {
-                key_img_ind++;
-                if (key_img_ind == key_img.size() - 1) {
-                    up = false;
-                }
-            } else {
-                key_img_ind--;
-                if (!key_img_ind) {
-                    up = true;
-                }
-            }
-            key_img_times = 0;
-        }
+        Image *img = key_animation.Draw();
         for (int i = 0; i < keySize; i++) {
             for (int j = 0; j < keySize; j++) {
                 screen.PutPixel(x * tileSize + i,
                                 y * tileSize + j,
                                 blend(floor->GetPixel(i, tileSize - j - 1), 
-                                      key_img[img]->GetPixel(i, keySize - j - 1)));
+                                      img->GetPixel(i, keySize - j - 1)));
             }
         }
     
@@ -412,7 +362,7 @@ Maze::Get_Pixel(int x, int y) {
         case Maze_Point::DOOR_CLOSED:
             return doors_closed_img.GetPixel(x % tileSize, y % tileSize);
         case Maze_Point::EXIT:
-            return exit_img[exit_img_ind]->GetPixel(x % tileSize, y % tileSize);
+            return exit_animation.Current()->GetPixel(x % tileSize, y % tileSize);
         default:
             return floor->GetPixel(x % tileSize, y % tileSize);
        }
@@ -445,7 +395,7 @@ Maze::reach_exit(Point coords) {
     return dist(coords, center) < tileSize / 2;
 }
 
-Monster::Monster(int x, int y) {
+Monster::Monster(int x, int y): walk_animation("resources/monsters/1/walk/", 4, 30) {
     coords.x = x * tileSize;
     coords.y = y * tileSize;
     start.x = x * tileSize;
@@ -453,55 +403,32 @@ Monster::Monster(int x, int y) {
 
     state = MonsterState::SLEEP;
     look = MovementDir::RIGHT;
-    int walk_img_num = 4;
-    for (int i = 0; i < walk_img_num; i++) {
-        std::string path = "resources/monsters/1/walk/" + std::to_string(i + 1) + ".png";
-        std::cout << path << '\n';
-        Image *img = new Image(path);
-        if (img->Width() == -1) {
-            std::cout << "FAIL\n";
-        }
-        walk.push_back(img);
-    }
 }
 
 void
 Monster::Draw(Image &screen, Maze *maze) {
+    Image *img;
     switch (state) {
         case MonsterState::DEAD:
             return;
         case MonsterState::SLEEP:
+            img = walk_animation.Draw(0);
             for (int x = 0; x < tileSize; x++) {
                 for (int y = 0; y < tileSize; y++) {
                     screen.PutPixel(coords.x + x, coords.y + y,
                             blend(maze->Get_Pixel(coords.x + x, coords.y + y),
-                                  walk[0]->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+                                  img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
                 }
             }
             break;
                     
         case MonsterState::WALK:
-            int img = walk_img_ind;
-            walk_img_times++;
-            if (walk_img_times > 20) {
-                if (walk_up) {
-                    walk_img_ind++;
-                    if (walk_img_ind == walk.size() - 1) {
-                        walk_up = false;
-                    }    
-                } else {
-                    walk_img_ind--;
-                    if (!walk_img_ind) {
-                        walk_up = true;
-                    }
-                }
-                walk_img_times = 0;
-            }
+            img = walk_animation.Draw();
             for (int x = 0; x < tileSize; x++) {
                 for (int y = 0; y < tileSize; y++) {
                     screen.PutPixel(coords.x + x, coords.y + y,
                             blend(maze->Get_Pixel(coords.x + x, coords.y + y),
-                                  walk[img]->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
+                                img->GetPixel((look == MovementDir::LEFT) ? x : tileSize - x - 1, tileSize - y - 1)));
                 }
             }
             break;
@@ -551,4 +478,46 @@ Monster::MoveTo(Point player, Maze *maze) {
     } else if (player.y < coords.y) {
         coords.y -= movedist;
     }
+}
+
+Animation::Animation(std::string path, int img_number, int times_max) {
+    std::string name;
+    img_ind = 0;
+    img_times = 0;
+    img_times_max = times_max;
+    up = true;
+    for (int i = 0; i < img_number; i++) {
+        name = path + std::to_string(i + 1) + ".png";
+        Image *new_img = new Image(name);
+        img.push_back(new_img);
+    }
+}
+
+Image *
+Animation::Draw(int ind) {
+    int draw = ind;
+    if (ind == -1) {
+        draw = img_ind;
+        img_times++;
+        if (img_times > img_times_max) {
+            if (up) {
+                img_ind++;
+                if (img_ind == img.size() - 1) {
+                    up = false;
+                }
+            } else {
+                img_ind--;
+                if (img_ind == 0) {
+                    up = true;
+                }
+            }
+            img_times = 0;
+        }
+    }
+    return img[draw];
+}
+
+Image *
+Animation::Current() {
+    return img[img_ind];
 }
