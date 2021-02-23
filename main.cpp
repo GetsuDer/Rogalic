@@ -294,7 +294,6 @@ int main(int argc, char** argv)
     for (int i = 0; i < rooms_number; i++) {
         if (rooms[i].path == start_room) {
             current_room = &(rooms[i]);
-            std::cout << "start room founded\n";
         }
         int doors_number;
         labirint_in >> doors_number;
@@ -306,7 +305,6 @@ int main(int argc, char** argv)
             for (int k = 0; k < rooms_number; k++) {
                 if (rooms[k].path == other_room) {
                     rooms[i].others[door_type - 1] = &(rooms[k]);
-                   
                 }
             }
         }
