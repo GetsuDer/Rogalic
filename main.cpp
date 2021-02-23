@@ -132,9 +132,9 @@ void
 game_over(Image &screen) {
     Image you_died("resources/elems/you_died.png");
     int width = you_died.Width();
-    int x_shift = screen.Width() / 4;
+    int x_shift = screen.Width() / 2;
     int height = you_died.Height();
-    int y_shift = screen.Height() / 4;
+    int y_shift = screen.Height() / 2;
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
             screen.PutPixel(i + x_shift, j + y_shift, you_died.GetPixel(i, height - j - 1));
@@ -204,9 +204,9 @@ void
 draw_win(Image &screen) {
     Image you_win("resources/elems/you_win.png");
     int width = you_win.Width();
-    int x_shift = screen.Width() / 4;
+    int x_shift = screen.Width() / 2;
     int height = you_win.Height();
-    int y_shift = screen.Height() / 4;
+    int y_shift = screen.Height() / 2;
 
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
@@ -216,14 +216,6 @@ draw_win(Image &screen) {
 
 }
 
-void
-clearBuffer(Image &screen) {
-    for (int i = 0; i < screen.Width(); i++) {
-        for (int j = 0; j < screen.Height(); j++) {
-            screen.PutPixel(i, j, backgroundColor);
-        }
-    }
-}
 std::string
 room_type(int type) {
     switch (type) {
@@ -243,16 +235,19 @@ Pixel make_darker(Pixel p, int n) {
     if (p.r < n ) {
         p.r = 0;
     } else {
-        p.r -= n;
+        if (n < 0 && p.r - n > 255) p.r = 255;
+        else p.r -= n;
     }
     if (p.g < n) {
         p.g = 0;
     } else {
-        p.g -= n;
+        if (n < 0 && p.g - n > 255) p.g = 255;
+        else p.g -= n;
     }
     if (p.b < n) {
         p.b = 0;
     } else {
+        if (n < 0 && p.b - n > 255) p.b = 255;
         p.b -= n;
     }
     return p;
@@ -260,6 +255,12 @@ Pixel make_darker(Pixel p, int n) {
 
 bool is_black(Pixel p) {
     return !p.r && !p.g && !p.b;
+}
+bool is_bigger(Pixel p1, Pixel p2) {
+    if (p1.r > p2.r) return false;
+    if (p1.g > p2.g) return false;
+    if (p1.b > p2.b) return false;
+    return true;
 }
 
 int main(int argc, char** argv)
@@ -337,6 +338,7 @@ int main(int argc, char** argv)
     Point starting_pos = current_room->Get_Player();
 	Player player{starting_pos};
 	Image screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
+    Image tmp_screenBuffer(WINDOW_WIDTH, WINDOW_HEIGHT, 4);
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);  GL_CHECK_ERRORS;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); GL_CHECK_ERRORS;
   //game loop
@@ -348,11 +350,45 @@ int main(int argc, char** argv)
 		lastFrame = currentFrame;
         glfwPollEvents();
         if (player.state == PlayerState::ALIVE) {
-            if (prev_room != current_room) {
-                clearBuffer(screenBuffer);
-                prev_room = current_room;
-            }
             processPlayerMovement(player, &current_room);
+            if (prev_room != current_room) {
+                prev_room->fires.clear();
+                Pixel tmp;
+                bool black;
+                while (true) {
+                    black = true;
+                    for (int i = 0; i < WINDOW_WIDTH; i++) {
+                        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                            tmp = screenBuffer.GetPixel(i, j);
+                            screenBuffer.PutPixel(i, j, make_darker(tmp, 5));
+                            if (!is_black(tmp)) {
+                                black = false;
+                            }
+                        }
+                    }
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
+                    glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+		            glfwSwapBuffers(window);
+
+                    if (black) break;
+                }
+                prev_room = current_room;
+                current_room->Draw_Lower(tmp_screenBuffer);
+                player.Draw(tmp_screenBuffer);
+                Pixel real;
+                for (int add = 255; add > 0; add -= 10) {
+                    for (int i = 0; i < WINDOW_WIDTH; i++) {
+                        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                            tmp = tmp_screenBuffer.GetPixel(i, j);
+                            screenBuffer.PutPixel(i, j, make_darker(tmp, add));
+                        }
+                    }
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
+                    glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+		            glfwSwapBuffers(window);
+                }
+
+            }
             current_room->processPlayer(player.placed());
             current_room->Draw_Lower(screenBuffer);
             player.Draw(screenBuffer);
