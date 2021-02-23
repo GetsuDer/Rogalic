@@ -238,6 +238,30 @@ room_type(int type) {
     }
     
 }
+
+Pixel make_darker(Pixel p, int n) {
+    if (p.r < n ) {
+        p.r = 0;
+    } else {
+        p.r -= n;
+    }
+    if (p.g < n) {
+        p.g = 0;
+    } else {
+        p.g -= n;
+    }
+    if (p.b < n) {
+        p.b = 0;
+    } else {
+        p.b -= n;
+    }
+    return p;
+}
+
+bool is_black(Pixel p) {
+    return !p.r && !p.g && !p.b;
+}
+
 int main(int argc, char** argv)
 {
 	if(!glfwInit())
@@ -353,6 +377,23 @@ int main(int argc, char** argv)
                 player.state = PlayerState::DEAD;
             }
             if (player.state == PlayerState::DEAD) {
+                Pixel tmp;
+                while (true) {
+                    bool black = true;
+                    for (int i = 0; i < WINDOW_WIDTH; i++) {
+                        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                            tmp = screenBuffer.GetPixel(i, j);
+                            screenBuffer.PutPixel(i, j, make_darker(tmp, 10));
+                            if (!is_black(tmp)) {
+                                black = false;
+                            }
+                        }
+                    }                         
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
+                    glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+		            glfwSwapBuffers(window);
+                    if (black) break;
+                }
                 game_over(screenBuffer);
             } else {
                 if (player.state == PlayerState::WIN) {

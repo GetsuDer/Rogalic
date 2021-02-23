@@ -709,6 +709,7 @@ Fire::update(Maze *maze) {
             if (maze->monsters[i]->hitpoints <= 0) {
                 maze->monsters[i]->state = MonsterState::DYING;
             }
+            break;
         }
     }
 }
