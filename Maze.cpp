@@ -377,11 +377,6 @@ Maze::Draw_Lower(Image &screen) {
         fires[i]->Draw(screen, this);
     }
 }
-void
-Maze::Draw_Higher(Image &screen) {
-// may be later
-
-}
 Pixel
 Maze::Get_Pixel(int x, int y) {
     switch (field[x / tileSize][y / tileSize]) {

@@ -85,7 +85,6 @@ struct Maze {
         void processPlayer(Point coords);
         int attack(Point coords);
         void Draw_Lower(Image &screen);
-        void Draw_Higher(Image &screen);
         Point Get_Player();
         Pixel Get_Pixel(int x, int y);
         bool free(Point coords);
@@ -152,6 +151,7 @@ struct Fire {
 
 enum class PlayerState
 {
+    FELL,
     DEAD,
     ALIVE,
     WIN,
@@ -175,15 +175,15 @@ struct Player
   int keys_obtained;
   Point placed();
   int hitpoints;
+  Animation walk_animation; 
+  Point coords {.x = 10, .y = 10};
 private:
   MovementDir look;
   bool active;
-  Animation walk_animation; 
-  Point coords {.x = 10, .y = 10};
   Point old_coords {.x = 10, .y = 10};
   Pixel color {.r = 255, .g = 255, .b = 0, .a = 255};
   int move_speed = 4;
 
 };
-
+Pixel blen(Pixel first, Pixel second);
 #endif //MAIN_PLAYER_H

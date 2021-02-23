@@ -94,7 +94,7 @@ void Player::ProcessInput(MovementDir dir, Maze **maze, int mouseX, int mouseY)
   }
   keys_obtained += (*maze)->update_keys(coords);
   if ((*maze)->fell(coords)) {
-      state = PlayerState::DEAD;
+      state = PlayerState::FELL;
       return;
   }
   if ((*maze)->reach_exit(coords)) {

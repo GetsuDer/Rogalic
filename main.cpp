@@ -334,8 +334,26 @@ int main(int argc, char** argv)
             current_room->processPlayer(player.placed());
             current_room->Draw_Lower(screenBuffer);
             player.Draw(screenBuffer);
-            current_room->Draw_Higher(screenBuffer);
             draw_info(screenBuffer, player, current_room);
+            if (player.state == PlayerState::FELL) {
+               // draw_fell(player, current_room);
+		        Image *img = player.walk_animation.Draw();
+                for (int i = 0; i < tileSize; i++) {
+                    current_room->Draw_Lower(screenBuffer);
+                    for (int x = 0; x < tileSize; x++) {
+                        for (int y = i; y < tileSize; y++) {
+                            screenBuffer.PutPixel(player.coords.x + x, 
+                                    player.coords.y + y - i,
+                                    blend(screenBuffer.GetPixel(player.coords.x + x,
+                                            player.coords.y + y - i), img->GetPixel(x, tileSize - y - 1)));
+                        }
+                    }
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
+                    glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+		            glfwSwapBuffers(window);
+                }
+                player.state = PlayerState::DEAD;
+            }
             if (player.state == PlayerState::DEAD) {
                 game_over(screenBuffer);
             } else {
