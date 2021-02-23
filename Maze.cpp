@@ -4,8 +4,8 @@
 #include "Image.h"
 #include "Player.h"
 
-Image doors_opened_img("resources/elems/doors_opened.jpg");
-Image doors_closed_img("resources/elems/doors_closed.jpg");
+Image doors_opened_img("resources/elems/doors_opened.png");
+Image doors_closed_img("resources/elems/doors_closed.png");
 Key::Key(int x, int y) {
     coords.x = x;
     coords.y = y;
@@ -246,24 +246,33 @@ Maze::open_nearest_door(Point coords) {
     coords.x /= tileSize;
     coords.y /= tileSize;
 
+    Point other_door;
     Point door = left_door();
     if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
         field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        other_door = others[0]->right_door();
+        others[0]->field[other_door.x][other_door.y] = Maze_Point::DOOR_OPENED;
         return true;
     }
     door = up_door();
     if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
         field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        other_door = others[1]->down_door();
+        others[1]->field[other_door.x][other_door.y] = Maze_Point::DOOR_OPENED;
         return true;
     }
     door = right_door();
     if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
         field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        other_door = others[2]->left_door();
+        others[2]->field[other_door.x][other_door.y] = Maze_Point::DOOR_OPENED;
         return true;
     }
     door = down_door();
     if (door.x >= 0 && (field[door.x][door.y] == Maze_Point::DOOR_CLOSED) && dist(door, coords) < 2) {
         field[door.x][door.y] = Maze_Point::DOOR_OPENED;
+        other_door = others[3]->up_door();
+        others[3]->field[other_door.x][other_door.y] = Maze_Point::DOOR_OPENED;
         return true;
     }
     return false;
@@ -312,10 +321,20 @@ Maze::Draw_Lower(Image &screen) {
                     Draw_Square(x, y, empty, screen);
                     break;
                 case Maze_Point::DOOR_CLOSED:
-                    Draw_Square(x, y, &doors_closed_img, screen);
+                    for (int i = 0; i < tileSize; i++) {
+                        for (int j = 0; j < tileSize; j++) {
+                            screen.PutPixel(x * tileSize + i, y * tileSize + j,
+                              blend(wall->GetPixel(i, j), doors_closed_img.GetPixel(i, tileSize - j - 1)));
+                        }
+                    }
                     break;
                 case Maze_Point::DOOR_OPENED:
-                    Draw_Square(x, y, &doors_opened_img, screen);
+                    for (int i = 0; i < tileSize; i++) {
+                        for (int j = 0; j < tileSize; j++) {
+                            screen.PutPixel(x * tileSize + i, y * tileSize + j,
+                              blend(wall->GetPixel(i, j), doors_opened_img.GetPixel(i, tileSize - j - 1)));
+                        }
+                    }
                     break;
                 case Maze_Point::EXIT:
                     Draw_Square(x, y, floor, screen);
@@ -423,8 +442,9 @@ Maze::attack(Point coords) {
 
 
 Monster::Monster(int x, int y, int type): 
-    walk_animation("resources/monsters/" + std::to_string(type) + "/walk/", 4, 30),
-    attack_animation("resources/monsters/" + std::to_string(type) + "/attack/", (type == 1) ? 6 : 2, 100),
+    walk_animation("resources/monsters/" + std::to_string(type) + "/walk/", 4, 50),
+    attack_animation("resources/monsters/" + std::to_string(type) + "/attack/", 
+            (type == 1) ? 6 : 20, (type == 1) ? 100 : 5),
     dying_animation("resources/monsters/" + std::to_string(type) + "/dying/", (type == 1) ? 10 : 12, (type == 1) ? 20 : 3) {
    
     attack_points = ((type == 1) ? 50 : 20); 
@@ -444,7 +464,7 @@ Monster::Monster(int x, int y, int type):
     dying_times = 0;
     hitpoints = (type == 1) ? 75 : 50; 
 }
-constexpr Pixel red {.r = 255, .g = 0, .b = 0, .a = 0};
+constexpr Pixel blue {.r = 0, .g = 0, .b = 255, .a = 0};
 void
 Monster::Draw(Image &screen, Maze *maze) {
     Image *img;
@@ -488,9 +508,10 @@ Monster::Draw(Image &screen, Maze *maze) {
         }
     }
 
-    for (int i = 0; i * 3 < hitpoints; i++) {
+    for (int i = 0; i * 6 < hitpoints; i++) {
         for (int j = 0; j < 5; j++) {
-            screen.PutPixel(coords.x + i, coords.y + tileSize + tileSize / 3 + j, red);
+            screen.PutPixel(coords.x + tileSize / 2 + i, coords.y + tileSize + tileSize / 3 + j, blue);
+            screen.PutPixel(coords.x + tileSize / 2 - i, coords.y + tileSize + tileSize / 3 + j, blue);
         }
     }
 

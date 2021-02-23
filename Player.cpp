@@ -132,9 +132,10 @@ void Player::Draw(Image &screen)
                                         tileSize - j - 1)));
         }
     }
-    for (int i = 0; i * 3 < hitpoints; i++) {
+    for (int i = 0; i * 6 < hitpoints; i++) {
         for (int j = 0; j < 5; j++) {
-            screen.PutPixel(coords.x + i, coords.y + tileSize + tileSize / 3 + j, red);
+            screen.PutPixel(coords.x + tileSize / 2 + i, coords.y + tileSize + tileSize / 3 + j, red);
+            screen.PutPixel(coords.x + tileSize / 2 - i, coords.y + tileSize + tileSize / 3 + j, red);
         }
     }
 }
