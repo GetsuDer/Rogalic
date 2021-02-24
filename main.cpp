@@ -132,7 +132,7 @@ void
 game_over(Image &screen) {
     Image you_died("resources/elems/you_died.png");
     int width = you_died.Width();
-    int x_shift = screen.Width() / 2;
+    int x_shift = screen.Width() / 3;
     int height = you_died.Height();
     int y_shift = screen.Height() / 2;
     for (int i = 0; i < width; i++) {
@@ -204,7 +204,7 @@ void
 draw_win(Image &screen) {
     Image you_win("resources/elems/you_win.png");
     int width = you_win.Width();
-    int x_shift = screen.Width() / 2;
+    int x_shift = screen.Width() / 3;
     int height = you_win.Height();
     int y_shift = screen.Height() / 2;
 
@@ -433,6 +433,20 @@ int main(int argc, char** argv)
                 game_over(screenBuffer);
             } else {
                 if (player.state == PlayerState::WIN) {
+                    Pixel tmp;
+                    tmp.r = 255;
+                    tmp.g = 255;
+                    tmp.b = 255;
+                    for (int i = 0; i * 2 < WINDOW_WIDTH; i++) {
+                        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                                screenBuffer.PutPixel(i, j, tmp);
+                                screenBuffer.PutPixel(WINDOW_WIDTH - i - 1, j, tmp);
+                        }
+                        
+                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
+                        glDrawPixels (WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.Data()); GL_CHECK_ERRORS;
+		                glfwSwapBuffers(window);
+                    }
                     draw_win(screenBuffer);        
                 }
             }

@@ -527,7 +527,7 @@ Maze::processPlayer(Point player) {
 
 
     double monster_attack_distance = tileSize / 2;
-    double monster_awake_distance = 5 * tileSize;
+    double monster_awake_distance = 8 * tileSize;
     for (int i = 0; i < monsters.size(); i++) {
         Monster *monster = monsters[i];
         double player_dist = dist(player, monster->coords);
@@ -564,24 +564,35 @@ void
 Monster::MoveTo(Point player, Maze *maze) {
     int movedist = (type == 1) ? 2 : 5;
     Point heart;
+    
     heart.x = player.x + tileSize / 2;
     heart.y = player.y + tileSize / 2;
     Point tale;
     tale.x = (look == MovementDir::LEFT) ? coords.x + tileSize : coords.x;
     tale.y = coords.y + tileSize / 2;
 
-    if (heart.x > tale.x) {
+    if ((heart.x - tale.x) > movedist && 
+            maze->field[(coords.x + tileSize - 1 + movedist) / tileSize][coords.y / tileSize] == Maze_Point::FLOOR &&
+            maze->field[(coords.x + tileSize - 1 + movedist) / tileSize][(coords.y + tileSize - 1) / tileSize] == Maze_Point::FLOOR) {
         coords.x += movedist;
         look = MovementDir::RIGHT;
-    } else if (heart.x < tale.x) {
+    } else if (movedist < tale.x - heart.x &&
+            maze->field[(coords.x - movedist) / tileSize][coords.y / tileSize] == Maze_Point::FLOOR &&
+            maze->field[(coords.x - movedist) / tileSize][(coords.y + tileSize - 1) / tileSize] == Maze_Point::FLOOR) {
         coords.x -= movedist;
         look = MovementDir::LEFT;
     }
-    if (heart.y > tale.y) {
+
+    if (heart.y - tale.y > movedist &&
+            maze->field[coords.x / tileSize][(coords.y + movedist + tileSize - 1) / tileSize] == Maze_Point::FLOOR &&
+            maze->field[(coords.x + tileSize - 1) / tileSize][(coords.y + movedist + tileSize - 1) / tileSize] == Maze_Point::FLOOR) {
         coords.y += movedist;
-    } else if (heart.y < tale.y) {
+    } else if (movedist < tale.y - heart.y  &&
+            maze->field[coords.x / tileSize][(coords.y - movedist) / tileSize] == Maze_Point::FLOOR &&
+            maze->field[(coords.x + tileSize - 1) / tileSize][(coords.y - movedist) / tileSize] == Maze_Point::FLOOR) {
         coords.y -= movedist;
     }
+    
 }
 
 bool
